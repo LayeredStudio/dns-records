@@ -68,8 +68,9 @@ const getDnsRecords = async (names, types, server) => {
 
 	let re = await exec(cmd.filter(arg => arg).join(' '))
 
+	// If dig command fails, it throws an error. This condition catches errors sent with `stderr`
 	if (re.stderr) {
-		throw re.stderr
+		throw new Error(re.stderr)
 	}
 
 	// split lines & ignore comments or empty
