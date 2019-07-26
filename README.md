@@ -5,10 +5,9 @@
 Uses `dig` command to make DNS requests, has a built-in list of subdomains to test for and has support for auto-discovering subdomains based on records found.
 
 ## Highlights
-* Retrieves really fast DNS records for a domain.
-* Discovers all A, AAAA and CNAME for a domain.
-* Provides results in a easy-to-use format.
-* 
+* Retrieves really fast DNS records for a domain
+* Discovers all A, AAAA and CNAME for a domain
+* Provides results in a easy-to-use format
 
 ## Roadmap
 Aiming to have these features:
@@ -62,7 +61,8 @@ const dnsRecords = require('./index.js');
 ```
 Returns a promise which resolves with an `Array` of records found, grouped by type:
 ```js
-{ NS:
+{
+  NS:
    [ { name: 'x.com.',
        ttl: '3600',
        type: 'NS',
@@ -93,7 +93,8 @@ Returns a promise which resolves with an `Array` of records found, grouped by ty
        ttl: '3600',
        type: 'MX',
        value: '10 mx-van.mail.am0.yahoodns.net.' } ],
-  TXT: [] }
+  TXT: []
+}
 ```
 
 ## More

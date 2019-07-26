@@ -2,7 +2,14 @@
   "name": "@layered/dns-records",
   "version": "1.0.0",
   "description": "Discover publicly available DNS Records for a domain",
-  "keywords": ["dns", "records", "dns", "ns", "name", "server"],
+  "keywords": [
+    "dns",
+    "records",
+    "dns",
+    "ns",
+    "name",
+    "server"
+  ],
   "author": "Andrei Igna <andrei@laye.red>",
   "license": "MIT",
   "bugs": {

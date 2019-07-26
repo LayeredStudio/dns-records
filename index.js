@@ -3,6 +3,7 @@ const util = require('util')
 const dns = require('dns')
 const exec = util.promisify(require('child_process').exec)
 
+// Records to check
 const subdomainsToCheck = require('./subdomains.js')
 const txtToCheck = [
 	'_amazonses',
@@ -11,11 +12,6 @@ const txtToCheck = [
 	'default._domainkey',
 	'google._domainkey',
 ]
-
-
-// DNS over HTTPS
-// https://dns.google.com/resolve?name=laye.red&type=AAAA&cd=1
-// curl -H 'accept: application/dns-json' 'https://cloudflare-dns.com/dns-query?name=laye.red&type=AAAA'
 
 
 const isTld = tld => {
@@ -35,7 +31,7 @@ const isDomain = domain => {
 	const labelTest = /^([a-z0-9-]{1,64}|xn[a-z0-9-]{5,})$/i
 
 	return labels.length > 1 && labels.every((label, index) => {
-		return index ? labelTest.test(label) && !label.startsWith('-') && !label.endsWith('-') : isTld(label)
+		return index ? !label.startsWith('-') && !label.endsWith('-') && labelTest.test(label) : isTld(label)
 	})
 }
 
@@ -44,7 +40,7 @@ const getDnsRecords = async (names, types, server) => {
 	let cmd = ['dig']
 
 	if (!Array.isArray(types)) {
-		types = [types] || 'A'
+		types = [types] || ['A']
 	}
 
 	if (!Array.isArray(names)) {
@@ -66,9 +62,9 @@ const getDnsRecords = async (names, types, server) => {
 		})
 	})
 
-	let re = await exec(cmd.filter(arg => arg).join(' '))
+	let re = await exec(cmd.join(' '))
 
-	// If dig command fails, it throws an error. This condition catches errors sent with `stderr`
+	// This step catches errors sent with `stderr` and not sent with `throw`
 	if (re.stderr) {
 		throw new Error(re.stderr)
 	}
