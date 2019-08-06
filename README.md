@@ -13,7 +13,7 @@ Uses `dig` command to make DNS requests, has a built-in list of subdomains to te
 Aiming to have these features:
 - [x] Retrieve DNS records for a domain -> `dnsRecords.getDnsRecords()`
 - [x] Discover common subdomains for a domain -> `dnsRecords.getAllRecords()`
-- [ ] Test that all NS respond with same info
+- [ ] Test that all NS respond with same info, with extra info: response time, NameServer location & ISP
 
 ## Getting Started
 
@@ -95,6 +95,40 @@ Returns a promise which resolves with an `Array` of records found, grouped by ty
        value: '10 mx-van.mail.am0.yahoodns.net.' } ],
   TXT: []
 }
+```
+
+**Test NS servers for a domain**
+```js
+const dnsRecords = require('./index.js');
+
+(async () => {
+
+  // Discover NS info
+  const NSRecords = await dnsRecords.getNameServers('fb.com')
+  console.log('NS servers info', NSRecords)
+
+})()
+```
+Returns a promise which resolves with an `Array` of NS info:
+```js
+[
+  {
+    ns: 'a.ns.facebook.com.',
+    soaSerial: '1565080527',
+    IPv4: [ '69.171.239.12' ],
+    IPv6: [ '2a03:2880:fffe:c:face:b00c::35' ],
+    responseTimev4: '',
+    responseTimev6: ''
+  },
+  {
+    ns: 'b.ns.facebook.com.',
+    soaSerial: '1565080527',
+    IPv4: [ '69.171.255.12' ],
+    IPv6: [ '2a03:2880:ffff:c:face:b00c::35' ],
+    responseTimev4: '',
+    responseTimev6: ''
+  }
+]
 ```
 
 ## More

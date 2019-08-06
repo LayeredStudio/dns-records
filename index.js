@@ -88,6 +88,58 @@ const getDnsRecords = async (names, types, server) => {
 	return re
 }
 
+
+const getNameServers = async domain => {
+	let ns = []
+
+	if (!isDomain(domain)) {
+		throw new Error(`"${domain}" is not a valid domain name`)
+	}
+
+	const nameServers = await getDnsRecords(domain, 'NS')
+
+	if (!nameServers.length) {
+		throw new Error(`No name servers found for "${domain}"`)
+	}
+
+	nameServers.forEach(nameServer => {
+		ns.push({
+			ns:				nameServer.value,
+			soaSerial:		'',
+			IPv4:			[],
+			IPv6:			[],
+			responseTimev4:	'',
+			responseTimev6:	''
+		})
+	})
+
+
+	// get SOA Record 
+	const SOA = await Promise.all(ns.map(nameServer => getDnsRecords(domain, 'SOA', nameServer.ns)))
+	SOA.forEach((records, index) => {
+		const soaRecord = records[0].value.split(' ')
+		ns[index].soaSerial = soaRecord[2]
+	})
+
+
+	// get A/AAAA Records
+	const A = await Promise.all(ns.map(nameServer => getDnsRecords(nameServer.ns, ['A', 'AAAA'])))
+	A.forEach((records, index) => {
+		records.forEach(record => {
+			const ip = record.type === 'A' ? 'IPv4' : 'IPv6'
+			ns[index][ip].push(record.value)
+		})
+	})
+
+
+	// TODO get IPs response time
+	// https://wp-rocket.me/blog/test-dns-server-response-time-troubleshoot-site-speed/
+
+
+	return ns
+}
+
+
 const getAllRecords = async domain => {
 	let dns = {
 		NS:		[],
@@ -195,5 +247,6 @@ const getAllRecords = async domain => {
 
 module.exports = {
 	getDnsRecords,
+	getNameServers,
 	getAllRecords
 }
