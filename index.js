@@ -114,7 +114,9 @@ const getAllRecords = async domain => {
 	}
 
 	// attempt to get all DNS records by AXFR request
-	let records = await getDnsRecords(domain, 'AXFR', nameServers[0].value)
+	// LE: AXFR fails for some popular NS servers, and is disabled for the moment
+	//let records = await getDnsRecords(domain, 'AXFR', nameServers[0].value)
+	let records = []
 
 	// attempt to get ANY DNS records
 	if (!records.length) {
