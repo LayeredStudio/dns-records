@@ -1,7 +1,7 @@
 const punycode = require('punycode')
 const util = require('util')
-const dns = require('dns')
 const exec = util.promisify(require('child_process').exec)
+const crypto = require('crypto')
 
 // Records to check
 const subdomainsToCheck = require('./subdomains.js')
@@ -131,10 +131,14 @@ const getAllRecords = async domain => {
 
 		//console.timeLog('dnsAll', 'got main records')
 
+		// filter found DNS results to only those for requested domain
+		const cleanResults = result => isDomain(result.name) && result.name.endsWith(`.${domain}.`)
+
+
 		// check subdomains. DNS request type is A, but returns CNAME in case if exists
-		let checked = subdomainsToCheck.map(subdomain => subdomain + '.' + domain + '.')
+		let checked = subdomainsToCheck.map(subdomain => `${subdomain}.${domain}.`)
 		let subdomains = await getDnsRecords(checked, 'A', nameServers[0].value)
-		records.push(...subdomains)
+		records.push(...subdomains.filter(cleanResults))
 
 
 		// check if new subdomains were discovered
@@ -153,7 +157,7 @@ const getAllRecords = async domain => {
 
 		while (extraSubdomains.length) {
 			subdomains = await getDnsRecords(extraSubdomains, 'A', nameServers[0].value)
-			records.push(...subdomains)
+			records.push(...subdomains.filter(cleanResults))
 
 			extraSubdomains = []
 			subdomains.forEach(extractNewSubdomains)
@@ -170,14 +174,19 @@ const getAllRecords = async domain => {
 
 	//console.timeEnd('dnsAll')
 
+	const added = []
+
 	records.forEach(record => {
 		if (!dns[record.type]) {
 			dns[record.type] = []
 		}
 
-		// TODO filter out duplicate records
+		const recordHash = crypto.createHash('md5').update(`${record.name}-${record.type}-${record.value}`).digest('hex')
 
-		dns[record.type].push(record)
+		if (!added.includes(recordHash)) {
+			dns[record.type].push(record)
+			added.push(recordHash)
+		}
 	})
 
 	return dns
