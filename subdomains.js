@@ -2,7 +2,6 @@
 // List of common subdomains to test for
 
 module.exports = [
-	'*',
 	'_domainkey',
 	'admin',
 	'ad',

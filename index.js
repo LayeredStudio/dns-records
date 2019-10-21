@@ -53,7 +53,7 @@ const getDnsRecords = async (names, types, server) => {
 
 	// +noall'		// don't display any texts (authority, question, stats, etc) in response,
 	// +answer		// except the answer
-	// +cdflag		// no DNSSEC check
+	// +cdflag		// no DNSSEC check, faster
 	// https://linux.die.net/man/1/dig
 
 	names.forEach(name => {
@@ -141,6 +141,7 @@ const getNameServers = async domain => {
 
 
 const getAllRecords = async domain => {
+	let wildcardSubdomains = []
 	let dns = {
 		NS:		[],
 		SOA:	[],
@@ -165,6 +166,15 @@ const getAllRecords = async domain => {
 		throw new Error(`No name servers found for "${domain}"`)
 	}
 
+
+	// filter DNS results to only allow those for requested domain
+	const cleanResults = result => {
+		return isDomain(result.name) 												// is valid domain
+				&& result.name.endsWith(`${domain}.`) 								// is for requested domain
+				&& !wildcardSubdomains.includes(result.type + '-' + result.value) 	// is not a match for wildcard CNAME
+	}
+
+
 	// attempt to get all DNS records by AXFR request
 	// LE: AXFR fails for some popular NS servers, and is disabled for the moment
 	//let records = await getDnsRecords(domain, 'AXFR', nameServers[0].value)
@@ -183,14 +193,45 @@ const getAllRecords = async domain => {
 
 		//console.timeLog('dnsAll', 'got main records')
 
-		// filter found DNS results to only those for requested domain
-		const cleanResults = result => isDomain(result.name) && result.name.endsWith(`.${domain}.`)
-
-
 		// check subdomains. DNS request type is A, but returns CNAME in case if exists
 		let checked = subdomainsToCheck.map(subdomain => `${subdomain}.${domain}.`)
 		let subdomains = await getDnsRecords(checked, 'A', nameServers[0].value)
-		records.push(...subdomains.filter(cleanResults))
+		subdomains = subdomains.filter(cleanResults)
+
+
+		// if there's more records found than asked for, domain most likely has wildcard subdomain
+		if (subdomains.length > subdomainsToCheck.length * 0.9) {
+			let groups = {}
+
+			subdomains.forEach(subdomain => {
+				const groupKey = `${subdomain.type}-${subdomain.value}`
+				groups[groupKey] = groups[groupKey] || 0
+				groups[groupKey]++
+			})
+
+			const found = []
+			Object.keys(groups).forEach(group => {
+				if (groups[group] > subdomainsToCheck.length * 0.9) {
+					found.push(group)
+				}
+			})
+
+			subdomains.forEach(subdomain => {
+				if (!found.includes(subdomain.type + '-' + subdomain.value)) {
+					records.push(subdomain)
+				} else if (!wildcardSubdomains.includes(subdomain.type + '-' + subdomain.value)) {
+					records.push({
+						name:	`*.${domain}`,
+						ttl:	subdomain.ttl,
+						type:	subdomain.type,
+						value:	subdomain.value
+					})
+					wildcardSubdomains.push(subdomain.type + '-' + subdomain.value)
+				}
+			})
+		} else {
+			records.push(...subdomains)
+		}
 
 
 		// check if new subdomains were discovered
@@ -221,7 +262,7 @@ const getAllRecords = async domain => {
 
 		// get TXT for subdomains info
 		const txts = await getDnsRecords(txtToCheck.map(subdomain => subdomain + '.' + domain), 'TXT', nameServers[0].value)
-		records.push(...txts)
+		records.push(...txts.filter(cleanResults))
 	}
 
 	//console.timeEnd('dnsAll')
@@ -229,13 +270,10 @@ const getAllRecords = async domain => {
 	const added = []
 
 	records.forEach(record => {
-		if (!dns[record.type]) {
-			dns[record.type] = []
-		}
-
 		const recordHash = crypto.createHash('md5').update(`${record.name}-${record.type}-${record.value}`).digest('hex')
 
 		if (!added.includes(recordHash)) {
+			dns[record.type] = dns[record.type] || []
 			dns[record.type].push(record)
 			added.push(recordHash)
 		}
