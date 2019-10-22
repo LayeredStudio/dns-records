@@ -18,7 +18,7 @@
   "homepage": "https://github.com/LayeredStudio/dns-records#readme",
   "main": "index.js",
   "scripts": {
-    "test": "mocha -t 5000 -s 3000"
+    "test": "mocha -t 10000 -s 4000"
   },
   "repository": {
     "type": "git",
@@ -26,5 +26,8 @@
   },
   "dependencies": {
     "punycode": "^2.1.1"
+  },
+  "devDependencies": {
+    "mocha": "^6.2.2"
   }
 }

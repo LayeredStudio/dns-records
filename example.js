@@ -8,7 +8,7 @@ const dnsRecords = require('./index.js');
 		console.log('DNS TXT records', records)
 
 		// Get NameServers info
-		const ns = await dnsRecords.getNameServers('cloudflare.com')
+		const ns = await dnsRecords.getNameServers('google.com')
 		console.log('NameServers', ns)
 
 		// Discover all DNS records
