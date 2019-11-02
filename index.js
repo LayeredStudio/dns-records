@@ -89,6 +89,44 @@ const getDnsRecords = async (names, types, server) => {
 }
 
 
+const getDnsTime = async (name, server) => {
+
+	if (server && !server.startsWith('@')) {
+		server = `@${server}`
+	}
+
+	// +noall'		// don't display any texts (authority, question, stats, etc) in response,
+	// +stats		// except the stats
+	// https://linux.die.net/man/1/dig
+
+	const cmd = `time dig ${server} ${name} +noall +stats`
+	let re
+
+	try {
+		re = await exec(cmd)
+	} catch (err) {
+		return null
+	}
+
+	let queryTime = re.stdout
+					.split("\n")
+					.filter(line => line.includes('time: '))
+					.map(line => line.split(': '))
+					.pop().pop()
+					.replace(' msec', '')
+
+	let realTime = re.stderr
+					.split("\n")
+					.filter(line => line.includes('real\t'))
+					.map(line => line.split("\t"))
+					.pop().pop()
+					.replace('0m', '')
+					.replace('s', '')
+
+	return realTime * 1000 - queryTime
+}
+
+
 const getNameServers = async domain => {
 	let ns = []
 
@@ -108,8 +146,8 @@ const getNameServers = async domain => {
 			soaSerial:		'',
 			IPv4:			[],
 			IPv6:			[],
-			responseTimev4:	'',
-			responseTimev6:	''
+			responseTimev4:	[],
+			responseTimev6:	[]
 		})
 	})
 
@@ -123,17 +161,32 @@ const getNameServers = async domain => {
 
 
 	// get A/AAAA Records
+	const ips = []
 	const A = await Promise.all(ns.map(nameServer => getDnsRecords(nameServer.ns, ['A', 'AAAA'])))
 	A.forEach((records, index) => {
 		records.forEach(record => {
 			const ip = record.type === 'A' ? 'IPv4' : 'IPv6'
 			ns[index][ip].push(record.value)
+			ips.push(record.value)
 		})
 	})
 
 
-	// TODO get IPs response time
-	// https://wp-rocket.me/blog/test-dns-server-response-time-troubleshoot-site-speed/
+	// Get NS IPs response time
+	const times = await Promise.all(ips.map(ip => getDnsTime(domain, ip)))
+
+	ns = ns.map(record => {
+
+		record.IPv4.forEach(ip => {
+			record.responseTimev4.push(times[ips.indexOf(ip)])
+		})
+
+		record.IPv6.forEach(ip => {
+			record.responseTimev6.push(times[ips.indexOf(ip)])
+		})
+
+		return record
+	})
 
 
 	return ns
