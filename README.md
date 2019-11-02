@@ -97,7 +97,7 @@ Returns a promise which resolves with an `Array` of records found, grouped by ty
 }
 ```
 
-**Test NS servers for a domain**
+**Test NS servers for a domain** - requires `time` command!
 ```js
 const dnsRecords = require('./index.js');
 

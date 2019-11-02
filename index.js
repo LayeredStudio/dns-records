@@ -98,8 +98,7 @@ const getDnsTime = async (name, server) => {
 	// +noall'		// don't display any texts (authority, question, stats, etc) in response,
 	// +stats		// except the stats
 	// https://linux.die.net/man/1/dig
-
-	const cmd = `time dig ${server} ${name} +noall +stats`
+	const cmd = `/usr/bin/time -p dig ${server} ${name} +noall +stats`
 	let re
 
 	try {
@@ -117,11 +116,9 @@ const getDnsTime = async (name, server) => {
 
 	let realTime = re.stderr
 					.split("\n")
-					.filter(line => line.includes('real\t'))
-					.map(line => line.split("\t"))
+					.filter(line => line.includes('real'))
+					.map(line => line.split("real"))
 					.pop().pop()
-					.replace('0m', '')
-					.replace('s', '')
 
 	return realTime * 1000 - queryTime
 }
