@@ -1,8 +1,8 @@
 # 🌍 DNS Records
 
-**dns-records** is a DNS helper tool for Node.js than can quickly retrieve or discover DNS records for a domain.
+**dns-records** is a DNS helper tool for Node.js than can quickly discover and retrieve DNS records for a domain.
 
-Uses `dig` command to make DNS requests, has a built-in list of subdomains to test for and has support for auto-discovering subdomains based on records found.
+Uses `dig` command to make DNS requests, has a built-in list of subdomains to test for and has support for auto-discovering more subdomains based on records found.
 
 ## Highlights
 * Retrieves really fast DNS records for a domain
@@ -16,6 +16,11 @@ Aiming to have these features:
 - [ ] Test that all NS respond with same info, with extra info: response time, NameServer location & ISP
 
 ## Getting Started
+
+#### Requirements
+
+- `dig` command for DNS lookups
+- `time` command to measure response times
 
 #### Installation
 
@@ -117,16 +122,16 @@ Returns a promise which resolves with an `Array` of NS info:
     soaSerial: '1565080527',
     IPv4: [ '69.171.239.12' ],
     IPv6: [ '2a03:2880:fffe:c:face:b00c::35' ],
-    responseTimev4: '',
-    responseTimev6: ''
+    responseTimev4: [ 53 ],
+    responseTimev6: [ 75 ]
   },
   {
     ns: 'b.ns.facebook.com.',
     soaSerial: '1565080527',
     IPv4: [ '69.171.255.12' ],
     IPv6: [ '2a03:2880:ffff:c:face:b00c::35' ],
-    responseTimev4: '',
-    responseTimev6: ''
+    responseTimev4: [ 57 ],
+    responseTimev6: [ 83 ]
   }
 ]
 ```

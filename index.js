@@ -232,8 +232,14 @@ const getAllRecords = async domain => {
 
 	// attempt to get ANY DNS records
 	if (!records.length) {
-		records = await getDnsRecords(domain, 'ANY', nameServers[0].value)
-		records = records.filter(record => record.type !== 'HINFO')
+
+		try {
+			records = await getDnsRecords(domain, 'ANY', nameServers[0].value)
+			records = records.filter(record => record.type !== 'HINFO')
+		} catch (err) {
+			// ANY query failed, carry on with other checks
+			console.warn(err.message)
+		}
 
 		// if no ANY records, request basic record types
 		if (!records.length) {
