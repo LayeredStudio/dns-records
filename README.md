@@ -45,7 +45,7 @@ const allRecords = dnsRecords.getAllRecords('x.com')
 - [`dnsRecords.getNameServers(domain)`](#detailed-ns-records) - Get detailed info about domain's Name servers
 - [`dnsRecords.getAllRecords(hostname)`](#all-dns-records) - Get ALL DNS records for a domain
 
-**DNS Records by type**
+#### DNS Records by type
 
 `dnsRecords.getDnsRecords(names, types, ns): Promise<Array>`
 
@@ -77,7 +77,8 @@ Returns a promise which resolves with an `Array` of records found:
 ```
 
 
-**Detailed NS records** - requires `time` command!
+#### Detailed NS records
+> Requires `time` command!
 
 `dnsRecords.getNameServers(domain): Promise<Array>`
 
@@ -116,7 +117,7 @@ Returns a promise which resolves with an `Array` of NS info:
 ```
 
 
-**All DNS records**
+#### All DNS records
 
 `dnsRecords.getAllRecords(domain): Promise<Object<Array>>`
 
