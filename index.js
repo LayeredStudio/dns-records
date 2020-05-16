@@ -251,7 +251,7 @@ const getAllRecords = async domain => {
 		//console.timeLog('dnsAll', 'got main records')
 
 		// check subdomains. DNS request type is A, but returns CNAME in case if exists
-		let checked = subdomainsToCheck.map(subdomain => `${subdomain}.${domain}.`)
+		let checked = subdomainsToCheck.map(subdomain => `${subdomain}.${domain}`)
 		let subdomains = await getDnsRecords(checked, 'A', nameServers[0].value)
 		subdomains = subdomains.filter(cleanResults)
 
@@ -291,19 +291,48 @@ const getAllRecords = async domain => {
 		}
 
 
-		// check if new subdomains were discovered
+		// Check if new subdomains were discovered
 		let extraSubdomains = []
 		const extractNewSubdomains = subdomain => {
-			if (isDomain(subdomain.value) && subdomain.value.endsWith(`.${domain}.`) && !checked.includes(subdomain.value)) {
-				extraSubdomains.push(subdomain.value)
-				checked.push(subdomain.value)
+			let s = subdomain.type === 'MX' ? subdomain.value.split(' ').pop() : subdomain.value
+
+			if (s.endsWith('.')) {
+				s = s.slice(0, -1)
+			}
+
+			if (isDomain(s) && s.endsWith(`.${domain}`) && !checked.includes(s)) {
+				let subdomainParts = s.replace(`.${domain}`, '').split('.')
+
+				while (subdomainParts.length) {
+					extraSubdomains.push(`${subdomainParts.join('.')}.${domain}`)
+					checked.push(`${subdomainParts.join('.')}.${domain}`)
+					subdomainParts.shift()
+				}
 			}
 		}
 
-
-		// check extra subdomains
+		// -- In NS records, ex: ns-X.[domain]. Resolve 'ns-X.[domain]'
 		nameServers.forEach(extractNewSubdomains)
+
+		// -- In subdomains, ex found: mail CNAME email-server.[domain]. Resolve 'email-server.[domain]'
 		subdomains.forEach(extractNewSubdomains)
+
+		// -- In MX records. ex found: '10 incoming.[domain]'. Resolve 'incoming.[domain]'
+		records.filter(r => r.type === 'MX').forEach(extractNewSubdomains)
+
+		// -- In TXT spf record, if self referenced domain
+		records.filter(r => r.type === 'TXT' && r.value.includes('v=spf1')).forEach(record => {
+			let parts = record.value.split(' ')
+
+			// get all parts that include subdomain + domain
+			parts = parts.filter(p => p.startsWith('include:') && p.endsWith(`.${domain}`))
+
+			// strip unnecessary strings
+			parts = parts.map(p => p.replace('include:', '').replace(`.${domain}`, ''))
+
+			txtToCheck.push(...parts)
+		})
+
 
 		while (extraSubdomains.length) {
 			subdomains = await getDnsRecords(extraSubdomains, 'A', nameServers[0].value)
