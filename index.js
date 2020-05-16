@@ -5,12 +5,13 @@ const crypto = require('crypto')
 
 // Records to check
 const subdomainsToCheck = require('./subdomains.js')
-const txtToCheck = [
+let txtToCheck = [
 	'_amazonses',
 	'_dmarc',
 	'_domainkey',
 	'default._domainkey',
 	'google._domainkey',
+	'mail._domainkey',
 ]
 
 
@@ -318,7 +319,7 @@ const getAllRecords = async domain => {
 
 		// get TXT for subdomains info
 		const txts = await getDnsRecords(txtToCheck.map(subdomain => subdomain + '.' + domain), 'TXT', nameServers[0].value)
-		records.push(...txts.filter(cleanResults))
+		records.push(...txts)
 	}
 
 	//console.timeEnd('dnsAll')
