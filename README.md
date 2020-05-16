@@ -46,7 +46,9 @@ const allRecords = dnsRecords.getAllRecords('x.com')
 - [`dnsRecords.getAllRecords(hostname)`](#all-dns-records) - Get ALL DNS records for a domain
 
 **DNS Records by type**
+
 `dnsRecords.getDnsRecords(names, types, ns): Promise<Array>`
+
 |Params|type|default|description|
 |-----|---|---|---|
 |names|string or array|   |hostname or array of hostnames. Ex: `'x.com'`, `['t.co', 'twitter.com']`|
@@ -74,11 +76,15 @@ Returns a promise which resolves with an `Array` of records found:
 ]
 ```
 
+
 **Detailed NS records** - requires `time` command!
+
 `dnsRecords.getNameServers(domain): Promise<Array>`
+
 |Params|type|default|description|
 |-----|---|---|---|
 |domain|string|   |Domain name, ex: `'google.com'`|
+
 ```js
 const dnsRecords = require('./index.js');
 
@@ -109,11 +115,15 @@ Returns a promise which resolves with an `Array` of NS info:
 ]
 ```
 
+
 **All DNS records**
+
 `dnsRecords.getAllRecords(domain): Promise<Object<Array>>`
+
 |Params|type|default|description|
 |-----|---|---|---|
 |domain|string|   |Domain name, ex: `'google.com'`|
+
 ```js
 const dnsRecords = require('./index.js');
 
