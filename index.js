@@ -321,14 +321,14 @@ const getAllRecords = async domain => {
 		records.filter(r => r.type === 'MX').forEach(extractNewSubdomains)
 
 		// -- In TXT spf record, if self referenced domain
-		records.filter(r => r.type === 'TXT' && r.value.includes('v=spf1')).forEach(record => {
+		records.filter(r => r.type === 'TXT' && r.value.includes('spf')).forEach(record => {
 			let parts = record.value.split(' ')
 
 			// get all parts that include subdomain + domain
-			parts = parts.filter(p => p.startsWith('include:') && p.endsWith(`.${domain}`))
+			parts = parts.filter(p => (p.startsWith('include:') || p.startsWith('redirect=')) && p.endsWith(`.${domain}`))
 
 			// strip unnecessary strings
-			parts = parts.map(p => p.replace('include:', '').replace(`.${domain}`, ''))
+			parts = parts.map(p => p.replace('include:', '').replace('redirect=', '').replace(`.${domain}`, ''))
 
 			txtToCheck.push(...parts)
 		})
