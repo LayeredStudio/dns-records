@@ -292,7 +292,7 @@ const getAllRecords = async domain => {
 		}
 
 
-		// Check if new subdomains were discovered
+		// Check if new subdomains can be extracted from a DNS Record's value
 		let extraSubdomains = []
 		const extractNewSubdomains = subdomain => {
 			let s = subdomain.type === 'MX' ? subdomain.value.split(' ').pop() : subdomain.value
@@ -304,6 +304,8 @@ const getAllRecords = async domain => {
 			if (isDomain(s) && s.endsWith(`.${domain}`) && !checked.includes(s)) {
 				let subdomainParts = s.replace(`.${domain}`, '').split('.')
 
+				// if a sub sub domain is found, example abc.def.example.com,
+				// extract all subdomain levels like def.example.com, abc.def.example.com
 				while (subdomainParts.length) {
 					extraSubdomains.push(`${subdomainParts.join('.')}.${domain}`)
 					checked.push(`${subdomainParts.join('.')}.${domain}`)

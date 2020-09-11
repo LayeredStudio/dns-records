@@ -4,6 +4,8 @@
 
 Uses `dig` command to make DNS requests, has a built-in list of subdomains to test for and support for auto-discovering more subdomains based on records found.
 
+→ See it in action here https://dmns.app
+
 ## Highlights
 * Retrieves really fast DNS records for a domain
 * Discovers all A, AAAA and CNAME for a domain
