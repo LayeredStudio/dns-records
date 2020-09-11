@@ -12,6 +12,7 @@ let txtToCheck = [
 	'default._domainkey',
 	'google._domainkey',
 	'mail._domainkey',
+	'default._bimi',
 ]
 
 
