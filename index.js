@@ -219,11 +219,16 @@ const getAllRecords = async domain => {
 	}
 
 
+	// check if result can be grouped under wildcard
+	const isNotWildcardSubdomain = result => {
+		return !wildcardSubdomains.includes(result.type + '-' + result.value)
+	}
+
 	// filter DNS results to only allow those for requested domain
 	const cleanResults = result => {
-		return isDomain(result.name) 												// is valid domain
-				&& result.name.endsWith(`${domain}.`) 								// is for requested domain
-				&& !wildcardSubdomains.includes(result.type + '-' + result.value) 	// is not a match for wildcard CNAME
+		return isDomain(result.name)					// is valid domain
+				&& result.name.endsWith(`${domain}.`)	// is for requested domain
+				&& isNotWildcardSubdomain(result)		// is not a match for wildcard CNAME
 	}
 
 
@@ -351,7 +356,7 @@ const getAllRecords = async domain => {
 
 		// get TXT for subdomains info
 		const txts = await getDnsRecords(txtToCheck.map(subdomain => subdomain + '.' + domain), 'TXT', nameServers[0].value)
-		records.push(...txts)
+		records.push(...txts.filter(isNotWildcardSubdomain))
 	}
 
 	//console.timeEnd('dnsAll')
