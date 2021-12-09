@@ -79,11 +79,17 @@ const getDnsRecords = async (names, types, server) => {
 		// replace tab(s) with space		split by space
 		line = line.replace(/[\t]+/g, " ").split(" ")
 
+		let value = line.slice(4).join(" ")
+
+		if (['NS', 'MX', 'A', 'AAAA', 'CNAME'].includes(line[3]) && value.endsWith('.') && isDomain(value)) {
+			value = value.slice(0, -1)
+		}
+
 		return {
-			name:	line[0],
+			name:	line[0].slice(0, -1),
 			ttl:	line[1],
 			type:	line[3],
-			value:	line.slice(4).join(" ")
+			value
 		}
 	})
 
@@ -150,14 +156,12 @@ const getNameServers = async domain => {
 		})
 	})
 
-
-	// get SOA Record 
+	// get SOA Record
 	const SOA = await Promise.all(ns.map(nameServer => getDnsRecords(domain, 'SOA', nameServer.ns)))
 	SOA.forEach((records, index) => {
 		const soaRecord = records[0].value.split(' ')
 		ns[index].soaSerial = soaRecord[2]
 	})
-
 
 	// get A/AAAA Records
 	const ips = []
@@ -169,7 +173,6 @@ const getNameServers = async domain => {
 			ips.push(record.value)
 		})
 	})
-
 
 	// Get NS IPs response time
 	const times = await Promise.all(ips.map(ip => getDnsTime(domain, ip)))
@@ -186,7 +189,6 @@ const getNameServers = async domain => {
 
 		return record
 	})
-
 
 	return ns
 }
@@ -219,15 +221,15 @@ const getAllRecords = async domain => {
 	}
 
 
-	// check if result can be grouped under wildcard
+	// helper - check if result can be grouped under wildcard
 	const isNotWildcardSubdomain = result => {
 		return !wildcardSubdomains.includes(result.type + '-' + result.value)
 	}
 
-	// filter DNS results to only allow those for requested domain
+	// helper - filter DNS results to only allow those for requested domain
 	const cleanResults = result => {
 		return isDomain(result.name)					// is valid domain
-				&& result.name.endsWith(`${domain}.`)	// is for requested domain
+				&& result.name.endsWith(domain)			// is for requested domain
 				&& isNotWildcardSubdomain(result)		// is not a match for wildcard CNAME
 	}
 

@@ -3,7 +3,7 @@ const dnsRecords = require('../index.js')
 
 describe('#dnsRecords.getNameServers()', function() {
 	it('should return 4 NameServers for "google.com"', async function() {
-		const expectedNs = ['ns1.google.com.', 'ns2.google.com.', 'ns3.google.com.', 'ns4.google.com.']
+		const expectedNs = ['ns1.google.com', 'ns2.google.com', 'ns3.google.com', 'ns4.google.com']
 		const ns = await dnsRecords.getNameServers('google.com')
 		assert.equal(ns.length, 4, 'Number of NameServers doesn\'t match')
 		assert(expectedNs.includes(ns[0].ns), 'Returned NS doesn\'t match')
