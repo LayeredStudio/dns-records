@@ -75,7 +75,7 @@ Returns a promise which resolves with an `DnsRecord[]` of records found:
 [ { name: 'google.com.',
     ttl: 608,
     type: 'TXT',
-    value: '"v=spf1 include:_spf.google.com ~all"' },
+    data: '"v=spf1 include:_spf.google.com ~all"' },
   ...
 ]
 ```
@@ -97,30 +97,14 @@ console.log('DNS all records', allRecords)
 ```
 Returns a Promise which resolves with `DnsRecord[]` of records found:
 ```js
-  [ { name: 'x.com.',
-      ttl: 3600,
-      type: 'NS',
-      value: 'ns71.domaincontrol.com.' },
-    { name: 'x.com.',
-      ttl: 3600,
-      type: 'NS',
-      value: 'ns72.domaincontrol.com.' },
-    { name: 'x.com.',
-      ttl: 600,
-      type: 'SOA',
-      value:
-      'ns71.domaincontrol.com. dns.jomax.net. 2018071100 28800 7200 604800 600' },
-    { name: 'x.com.', ttl: 600, type: 'A', value: '160.153.63.10' },
-    { name: 'x.com.', ttl: 600, type: 'A', value: '160.153.63.10' },
-    { name: 'www.x.com.',
-      ttl: 3600,
-      type: 'CNAME',
-      value: 'x.com.' },
-    { name: 'x.com.',
-      ttl: 3600,
-      type: 'MX',
-      value: '10 mx-van.mail.am0.yahoodns.net.' }
-  ]
+[ { name: 'x.com.', ttl: 3600, type: 'NS', data: 'ns71.domaincontrol.com.' },
+  { name: 'x.com.', ttl: 3600, type: 'NS', data: 'ns72.domaincontrol.com.' },
+  { name: 'x.com.', ttl: 600, type: 'SOA', data: 'ns71.domaincontrol.com. dns.jomax.net. 2018071100 28800 7200 604800 600' },
+  { name: 'x.com.', ttl: 600, type: 'A', data: '160.153.63.10' },
+  { name: 'x.com.', ttl: 600, type: 'A', data: '160.153.63.10' },
+  { name: 'www.x.com.',  ttl: 3600, type: 'CNAME', data: 'x.com.' },
+  { name: 'x.com.', ttl: 3600, type: 'MX', data: '10 mx-van.mail.am0.yahoodns.net.' }
+]
 ```
 
 ## More
