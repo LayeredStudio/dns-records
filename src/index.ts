@@ -1,5 +1,4 @@
 import { toASCII } from 'punycode'
-import { ReadableStream, TransformStream } from 'stream/web'
 import { subdomainsRecords } from './subdomains.js'
 
 const isTld = (tld: string): boolean => {
@@ -284,13 +283,27 @@ export async function getAllDnsRecords(domain: string, options: Partial<GetAllDn
 	const records: DnsRecord[] = []
 	const dnsRecordsStream = getAllDnsRecordsStream(domain, options)
 
-	for await (const record of dnsRecordsStream) {
-		records.push(parseDnsRecord(record))
-	}
+	const reader = dnsRecordsStream.getReader();
 
-	//todo detect wildcards
+	return new Promise((resolve) => {
+		const read = () => {
+			reader.read().then(({done, value}) => {
+				if (done) {
 
-	return records
+					//todo detect wildcards
+
+					resolve(records)
+				} else {
+					records.push(parseDnsRecord(value))
+					read()
+				}
+			}).catch(error => {
+				console.error('dns err', error);               
+			})
+		}
+	
+		read();
+	})
 }
 
 export function parseDnsRecord(record: string|Uint8Array): DnsRecord {

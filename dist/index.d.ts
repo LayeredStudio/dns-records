@@ -1,5 +1,3 @@
-/// <reference types="node" />
-import { ReadableStream } from 'stream/web';
 export type DnsRecord = {
     name: string;
     type: string;
