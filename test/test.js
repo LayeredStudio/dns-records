@@ -6,10 +6,9 @@ import { getDnsRecords, getAllDnsRecords } from '../dist/index.js'
 test('get name servers for google.com (NS)', async () => {
 	const expectedNs = ['ns1.google.com.', 'ns2.google.com.', 'ns3.google.com.', 'ns4.google.com.']
 
-	const [ nsRecordsWithCloudflareDns, nsRecordsWithGoogleDns, nsRecordsWithNodeDig ] = await Promise.all([
+	const [ nsRecordsWithCloudflareDns, nsRecordsWithGoogleDns ] = await Promise.all([
 		getDnsRecords('google.com', 'NS', 'cloudflare-dns'),
 		getDnsRecords('google.com', 'NS', 'google-dns'),
-		getDnsRecords('google.com', 'NS', 'node-dig'),
 	])
 
 	assert.equal(nsRecordsWithCloudflareDns.length, expectedNs.length, 'Number of NameServers doesn\'t match')
@@ -19,34 +18,26 @@ test('get name servers for google.com (NS)', async () => {
 	assert.equal(nsRecordsWithGoogleDns.length, expectedNs.length, 'Number of NameServers doesn\'t match')
 	assert.ok(expectedNs.some(ns => ns === nsRecordsWithGoogleDns[1].data), 'Returned NS doesn\'t match')
 	assert.ok(expectedNs.some(ns => ns === nsRecordsWithGoogleDns[1].data), 'Returned NS doesn\'t match')
-
-	assert.equal(nsRecordsWithGoogleDns.length, expectedNs.length, 'Number of NameServers doesn\'t match')
-	assert.ok(expectedNs.some(ns => ns === nsRecordsWithNodeDig[1].data), 'Returned NS doesn\'t match')
-	assert.ok(expectedNs.some(ns => ns === nsRecordsWithNodeDig[1].data), 'Returned NS doesn\'t match')
 });
 
 test('get A records for "mañana.com" (IDN)', async () => {
-	const [ aRecordsWithCloudflareDns, aRecordsWithGoogleDns, aRecordsWithNodeDig ] = await Promise.all([
+	const [ aRecordsWithCloudflareDns, aRecordsWithGoogleDns ] = await Promise.all([
 		getDnsRecords('mañana.com', 'A', 'cloudflare-dns'),
 		getDnsRecords('mañana.com', 'A', 'google-dns'),
-		getDnsRecords('mañana.com', 'A', 'node-dig'),
 	])
 
 	assert.notEqual(aRecordsWithCloudflareDns.length, 0, 'No A records returned')
 	assert.equal(aRecordsWithCloudflareDns.length, aRecordsWithGoogleDns.length, 'A records length between `google-dns` and `cloudflare-dns` doesn\'t match')
-	assert.equal(aRecordsWithGoogleDns.length, aRecordsWithNodeDig.length, 'A records length between `google-dns` and `node-dig` doesn\'t match')
 });
 
 test('get TXT records for "cloudflare.com"', async () => {
-	const [ txtRecordsWithCloudflareDns, txtRecordsWithGoogleDns, txtRecordsWithNodeDig ] = await Promise.all([
+	const [ txtRecordsWithCloudflareDns, txtRecordsWithGoogleDns ] = await Promise.all([
 		getDnsRecords('cloudflare.com', 'TXT', 'cloudflare-dns'),
 		getDnsRecords('cloudflare.com', 'TXT', 'google-dns'),
-		getDnsRecords('cloudflare.com', 'TXT', 'node-dig'),
 	])
 
 	assert.notEqual(txtRecordsWithCloudflareDns.length, 0, 'No TXT records returned')
 	assert.equal(txtRecordsWithCloudflareDns.length, txtRecordsWithGoogleDns.length, 'TXT records length between `google-dns` and `cloudflare-dns` doesn\'t match')
-	assert.equal(txtRecordsWithGoogleDns.length, txtRecordsWithNodeDig.length, 'TXT records length between `google-dns` and `node-dig` doesn\'t match')
 });
 
 test('get all DNS records for "x.com"', async () => {

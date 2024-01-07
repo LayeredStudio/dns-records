@@ -30,90 +30,58 @@ const dnsTypeNumbers = {
     33: 'SRV',
     257: 'CAA',
 };
-export async function getDnsRecords(name, type = 'A', resolver = 'cloudflare-dns') {
-    if (!isDomain(name)) {
-        throw new Error(`"${name}" is not a valid domain name`);
-    }
-    if (['cloudflare-dns', 'google-dns'].includes(resolver)) {
-        const url = resolver === 'cloudflare-dns' ? 'https://cloudflare-dns.com/dns-query' : 'https://dns.google/resolve';
-        const re = await fetch(`${url}?name=${toASCII(name)}&type=${type}&cd=1`, {
+const dnsResolvers = {
+    'cloudflare-dns': async (name, type = 'A') => {
+        const re = await fetch(`https://cloudflare-dns.com/dns-query?name=${toASCII(name)}&type=${type}&cd=1`, {
             headers: {
                 accept: 'application/dns-json',
             }
         });
-        if (re.ok) {
-            const json = await re.json();
-            const records = (json.Answer || []).map((record) => {
-                return {
-                    name: record.name,
-                    type: dnsTypeNumbers[record.type] || String(record.type),
-                    ttl: record.TTL,
-                    data: record.data,
-                };
-            });
-            return records;
-        }
-        else {
+        if (!re.ok) {
             throw new Error(`Error fetching DNS records for ${name}: ${re.status} ${re.statusText}`);
         }
-    }
-    else if (resolver === 'node-dig') {
-        return getDnsRecordsDig(name, type);
-    }
-    return [];
-}
-/**
- * Get DNS records using the `dig` command
- */
-export async function getDnsRecordsDig(names, types = 'A', server) {
-    const { spawnSync } = await import('node:child_process');
-    // start building the arguments list for the `dig` command
-    const args = [];
-    // append @ to server if not present
-    if (server) {
-        if (!server.startsWith('@')) {
-            server = `@${server}`;
-        }
-        args.push(server);
-    }
-    if (!Array.isArray(names)) {
-        names = [names];
-    }
-    names.forEach(name => {
-        name = toASCII(name);
-        if (Array.isArray(types) && types.length) {
-            types.forEach(type => {
-                args.push(name, type);
-            });
-        }
-        else if (types && typeof types === 'string') {
-            args.push(name, types);
-        }
-        else {
-            args.push(name);
-        }
-    });
-    // +noall'		// don't display any texts (authority, question, stats, etc) in response,
-    // +answer		// except the answer
-    // +cdflag		// no DNSSEC check, faster
-    // https://linux.die.net/man/1/dig
-    const dig = spawnSync('dig', [...args, '+noall', '+answer', '+cdflag']);
-    let re = dig.stdout.toString();
-    const dnsRecords = [];
-    // split lines & ignore comments or empty
-    re.split("\n")
-        .filter(line => line.length && !line.startsWith(';'))
-        .forEach(line => {
-        // replace tab(s) with space, then split by space
-        const parts = line.replace(/[\t]+/g, " ").split(" ");
-        dnsRecords.push({
-            name: String(parts[0]),
-            ttl: Number(parts[1]),
-            type: String(parts[3]),
-            data: parts.slice(4).join(" ")
+        const json = await re.json();
+        const records = (json.Answer || []).map((record) => {
+            return {
+                name: record.name,
+                type: dnsTypeNumbers[record.type] || String(record.type),
+                ttl: record.TTL,
+                data: record.data,
+            };
         });
-    });
-    return dnsRecords;
+        return records;
+    },
+    'google-dns': async (name, type = 'A') => {
+        const re = await fetch(`https://dns.google/resolve?name=${toASCII(name)}&type=${type}&cd=1`);
+        if (!re.ok) {
+            throw new Error(`Error fetching DNS records for ${name}: ${re.status} ${re.statusText}`);
+        }
+        const json = await re.json();
+        const records = (json.Answer || []).map((record) => {
+            return {
+                name: record.name,
+                type: dnsTypeNumbers[record.type] || String(record.type),
+                ttl: record.TTL,
+                data: record.data,
+            };
+        });
+        return records;
+    },
+};
+export async function getDnsRecords(name, type = 'A', resolver = 'cloudflare-dns') {
+    if (!isDomain(name)) {
+        throw new Error(`"${name}" is not a valid domain name`);
+    }
+    if (resolver in dnsResolvers) {
+        const fn = dnsResolvers[resolver];
+        if (typeof fn !== 'function') {
+            throw new Error(`Invalid DNS resolver: ${resolver}`);
+        }
+        return fn(name, type);
+    }
+    else {
+        throw new Error(`Invalid DNS resolver: ${resolver}`);
+    }
 }
 export function getAllDnsRecordsStream(domain, options = {}) {
     options = {

@@ -1,5 +1,6 @@
 import { toASCII } from 'punycode'
 import { subdomainsRecords } from './subdomains.js'
+import type { DnsRecord } from './types.js'
 
 const isTld = (tld: string): boolean => {
 	if (tld.startsWith('.')) {
@@ -37,11 +38,49 @@ const dnsTypeNumbers: { [key: number]: string } = {
 	257: 'CAA',
 }
 
-export type DnsRecord = {
-	name: string
-	type: string
-	ttl: number
-	data: string
+const dnsResolvers: { [key: string]: Function } = {
+	'cloudflare-dns': async (name: string, type = 'A'): Promise<DnsRecord[]> => {
+		const re = await fetch(`https://cloudflare-dns.com/dns-query?name=${toASCII(name)}&type=${type}&cd=1`, {
+			headers: {
+				accept: 'application/dns-json',
+			}
+		})
+
+		if (!re.ok) {
+			throw new Error(`Error fetching DNS records for ${name}: ${re.status} ${re.statusText}`)
+		}
+
+		const json: any = await re.json()
+		const records: DnsRecord[] = (json.Answer || []).map((record: any) => {
+			return {
+				name: record.name,
+				type: dnsTypeNumbers[record.type] || String(record.type),
+				ttl: record.TTL,
+				data: record.data,
+			}
+		})
+
+		return records
+	},
+	'google-dns': async (name: string, type = 'A'): Promise<DnsRecord[]> => {
+		const re = await fetch(`https://dns.google/resolve?name=${toASCII(name)}&type=${type}&cd=1`)
+
+		if (!re.ok) {
+			throw new Error(`Error fetching DNS records for ${name}: ${re.status} ${re.statusText}`)
+		}
+
+		const json: any = await re.json()
+		const records: DnsRecord[] = (json.Answer || []).map((record: any) => {
+			return {
+				name: record.name,
+				type: dnsTypeNumbers[record.type] || String(record.type),
+				ttl: record.TTL,
+				data: record.data,
+			}
+		})
+
+		return records
+	},
 }
 
 export async function getDnsRecords(name: string, type = 'A', resolver = 'cloudflare-dns'): Promise<DnsRecord[]> {
@@ -49,105 +88,22 @@ export async function getDnsRecords(name: string, type = 'A', resolver = 'cloudf
 		throw new Error(`"${name}" is not a valid domain name`)
 	}
 
-	if (['cloudflare-dns', 'google-dns'].includes(resolver)) {
-		const url = resolver === 'cloudflare-dns' ? 'https://cloudflare-dns.com/dns-query' : 'https://dns.google/resolve'
+	if (resolver in dnsResolvers) {
+		const fn = dnsResolvers[resolver]
 
-		const re = await fetch(`${url}?name=${toASCII(name)}&type=${type}&cd=1`, {
-			headers: {
-				accept: 'application/dns-json',
-			}
-		})
-
-		if (re.ok) {
-			const json: any = await re.json()
-
-			const records: DnsRecord[] = (json.Answer || []).map((record: any) => {
-				return {
-					name: record.name,
-					type: dnsTypeNumbers[record.type] || String(record.type),
-					ttl: record.TTL,
-					data: record.data,
-				}
-			})
-
-			return records
-		} else {
-			throw new Error(`Error fetching DNS records for ${name}: ${re.status} ${re.statusText}`)
+		if (typeof fn !== 'function') {
+			throw new Error(`Invalid DNS resolver: ${resolver}`)
 		}
-	} else if (resolver === 'node-dig') {
-		return getDnsRecordsDig(name, type)
+
+		return fn(name, type)
+	} else {
+		throw new Error(`Invalid DNS resolver: ${resolver}`)
 	}
-
-	return []
-}
-
-/**
- * Get DNS records using the `dig` command
- */
-export async function getDnsRecordsDig(names: string | string[], types: string | string[] = 'A', server?: string): Promise<DnsRecord[]> {
-	const { spawnSync } = await import('node:child_process')
-	// start building the arguments list for the `dig` command
-	const args = []
-
-	// append @ to server if not present
-	if (server) {
-		if (!server.startsWith('@')) {
-			server = `@${server}`
-		}
-		
-		args.push(server)
-	}
-
-	if (!Array.isArray(names)) {
-		names = [names]
-	}
-
-	names.forEach(name => {
-		name = toASCII(name)
-
-		if (Array.isArray(types) && types.length) {
-			types.forEach(type => {
-				args.push(name, type)
-			})
-		} else if (types && typeof types === 'string') {
-			args.push(name, types)
-		} else {
-			args.push(name)
-		}
-	})
-
-	// +noall'		// don't display any texts (authority, question, stats, etc) in response,
-	// +answer		// except the answer
-	// +cdflag		// no DNSSEC check, faster
-	// https://linux.die.net/man/1/dig
-
-	const dig = spawnSync('dig', [...args, '+noall', '+answer', '+cdflag'])
-	let re = dig.stdout.toString()
-
-	const dnsRecords: DnsRecord[] = []
-
-	// split lines & ignore comments or empty
-	re.split("\n")
-		.filter(line => line.length && !line.startsWith(';'))
-		.forEach(line => {
-			// replace tab(s) with space, then split by space
-			const parts = line.replace(/[\t]+/g, " ").split(" ")
-
-			dnsRecords.push({
-				name: String(parts[0]),
-				ttl: Number(parts[1]),
-				type: String(parts[3]),
-				data: parts.slice(4).join(" ")
-			})
-		})
-
-	return dnsRecords
 }
 
 export type GetAllDnsRecordsOptions = {
-	resolver?: 'cloudflare-dns' | 'google-dns' | 'node-dig'
+	resolver?: string
 	subdomains?: string[]
-	dnsServer?: string
 }
 
 export function getAllDnsRecordsStream(domain: string, options: Partial<GetAllDnsRecordsOptions> = {}): ReadableStream {
