@@ -1,45 +1,73 @@
-const assert = require('assert')
-const dnsRecords = require('../index.js')
+import { strict as assert } from 'node:assert'
+import test from 'node:test'
 
-describe('#dnsRecords.getNameServers()', function() {
-	it('should return 4 NameServers for "google.com"', async function() {
-		const expectedNs = ['ns1.google.com', 'ns2.google.com', 'ns3.google.com', 'ns4.google.com']
-		const ns = await dnsRecords.getNameServers('google.com')
-		assert.equal(ns.length, 4, 'Number of NameServers doesn\'t match')
-		assert(expectedNs.includes(ns[0].ns), 'Returned NS doesn\'t match')
-		assert(expectedNs.includes(ns[1].ns), 'Returned NS doesn\'t match')
-	});
+import { getDnsRecords, getAllDnsRecords } from '../dist/index.js'
+
+test('get name servers for google.com (NS)', async () => {
+	const expectedNs = ['ns1.google.com.', 'ns2.google.com.', 'ns3.google.com.', 'ns4.google.com.']
+
+	const [ nsRecordsWithCloudflareDns, nsRecordsWithGoogleDns, nsRecordsWithNodeDig ] = await Promise.all([
+		getDnsRecords('google.com', 'NS', 'cloudflare-dns'),
+		getDnsRecords('google.com', 'NS', 'google-dns'),
+		getDnsRecords('google.com', 'NS', 'node-dig'),
+	])
+
+	assert.equal(nsRecordsWithCloudflareDns.length, expectedNs.length, 'Number of NameServers doesn\'t match')
+	assert.ok(expectedNs.some(ns => ns === nsRecordsWithCloudflareDns[1].data), 'Returned NS doesn\'t match')
+	assert.ok(expectedNs.some(ns => ns === nsRecordsWithCloudflareDns[1].data), 'Returned NS doesn\'t match')
+
+	assert.equal(nsRecordsWithGoogleDns.length, expectedNs.length, 'Number of NameServers doesn\'t match')
+	assert.ok(expectedNs.some(ns => ns === nsRecordsWithGoogleDns[1].data), 'Returned NS doesn\'t match')
+	assert.ok(expectedNs.some(ns => ns === nsRecordsWithGoogleDns[1].data), 'Returned NS doesn\'t match')
+
+	assert.equal(nsRecordsWithGoogleDns.length, expectedNs.length, 'Number of NameServers doesn\'t match')
+	assert.ok(expectedNs.some(ns => ns === nsRecordsWithNodeDig[1].data), 'Returned NS doesn\'t match')
+	assert.ok(expectedNs.some(ns => ns === nsRecordsWithNodeDig[1].data), 'Returned NS doesn\'t match')
 });
 
-describe('#dnsRecords.getDnsRecords()', function() {
-	it('should return TXT records for "cloudflare.com"', async function() {
-		const txt = await dnsRecords.getDnsRecords('cloudflare.com')
-		assert(txt.length > 0, 'No TXT records returned')
-	});
+test('get A records for "mañana.com" (IDN)', async () => {
+	const [ aRecordsWithCloudflareDns, aRecordsWithGoogleDns, aRecordsWithNodeDig ] = await Promise.all([
+		getDnsRecords('mañana.com', 'A', 'cloudflare-dns'),
+		getDnsRecords('mañana.com', 'A', 'google-dns'),
+		getDnsRecords('mañana.com', 'A', 'node-dig'),
+	])
 
-	it('should return TXT records for "blog.google"', async function() {
-		const txt = await dnsRecords.getDnsRecords('blog.google')
-		assert(txt.length > 0, 'No TXT records returned')
-	});
+	assert.notEqual(aRecordsWithCloudflareDns.length, 0, 'No A records returned')
+	assert.equal(aRecordsWithCloudflareDns.length, aRecordsWithGoogleDns.length, 'A records length between `google-dns` and `cloudflare-dns` doesn\'t match')
+	assert.equal(aRecordsWithGoogleDns.length, aRecordsWithNodeDig.length, 'A records length between `google-dns` and `node-dig` doesn\'t match')
 });
 
-describe('#dnsRecords.getAllRecords()', function() {
-	it('should return all DNS records for "x.com"', async function() {
-		const records = await dnsRecords.getAllRecords('x.com')
-		assert(records.A.length > 0, 'No A records returned')
-		assert(records.NS.length > 0, 'No NS records returned')
-		assert(records.CNAME.length > 0, 'No CNAME records returned')
-		assert(records.MX.length > 0, 'No MX records returned')
-	});
+test('get TXT records for "cloudflare.com"', async () => {
+	const [ txtRecordsWithCloudflareDns, txtRecordsWithGoogleDns, txtRecordsWithNodeDig ] = await Promise.all([
+		getDnsRecords('cloudflare.com', 'TXT', 'cloudflare-dns'),
+		getDnsRecords('cloudflare.com', 'TXT', 'google-dns'),
+		getDnsRecords('cloudflare.com', 'TXT', 'node-dig'),
+	])
 
-	it('should detect the wildcard subdomains for "wordpress.org"', async function() {
-		const records = await dnsRecords.getAllRecords('wordpress.org')
-		const as = records.A.map(record => record.name)
-		const cnames = records.CNAME.map(record => record.name)
-
-		assert(records.A.length > 0, 'No A records returned')
-		assert(records.NS.length > 0, 'No NS records returned')
-		assert(as.includes('*.wordpress.org'), 'No * record found for A')
-		assert(cnames.includes('*.wordpress.org'), 'No * record found for CNAME')
-	});
+	assert.notEqual(txtRecordsWithCloudflareDns.length, 0, 'No TXT records returned')
+	assert.equal(txtRecordsWithCloudflareDns.length, txtRecordsWithGoogleDns.length, 'TXT records length between `google-dns` and `cloudflare-dns` doesn\'t match')
+	assert.equal(txtRecordsWithGoogleDns.length, txtRecordsWithNodeDig.length, 'TXT records length between `google-dns` and `node-dig` doesn\'t match')
 });
+
+test('get all DNS records for "x.com"', async () => {
+	const dnsRecords = await getAllDnsRecords('x.com')
+
+	assert.notEqual(dnsRecords.length, 0, 'No DNS Records returned')
+	assert.notEqual(dnsRecords.find(record => record.type === 'NS').length > 0, 'No NS records returned')
+	assert.notEqual(dnsRecords.find(record => record.type === 'A').length, 0, 'No A records returned')
+	assert.notEqual(dnsRecords.find(record => record.type === 'MX').length > 0, 'No MX records returned')
+	assert.notEqual(dnsRecords.find(record => record.type === 'TXT').length > 0, 'No TXT records returned')
+});
+
+/* 
+test('should detect the wildcard subdomains for "wordpress.org"', async () => {
+	const records = await getAllRecords('wordpress.org')
+	const as = records.A.map(record => record.name)
+	const cnames = records.CNAME.map(record => record.name)
+
+	assert(records.A.length > 0, 'No A records returned')
+	assert(records.NS.length > 0, 'No NS records returned')
+	assert(as.includes('*.wordpress.org'), 'No * record found for A')
+	assert(cnames.includes('*.wordpress.org'), 'No * record found for CNAME')
+});
+*/

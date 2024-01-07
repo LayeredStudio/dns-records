@@ -1,33 +1,36 @@
 {
   "name": "@layered/dns-records",
-  "version": "1.5.0",
+  "version": "2.0.0",
   "description": "Discover publicly available DNS Records for a domain",
+  "type": "module",
   "keywords": [
     "dns",
-    "records",
-    "dns",
+    "domain",
     "ns",
-    "name",
-    "server"
+    "nslookup",
+    "records"
   ],
   "author": "Andrei Igna <andrei@laye.red>",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/LayeredStudio/dns-records/issues"
-  },
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/LayeredStudio/dns-records.git"
   },
   "homepage": "https://github.com/LayeredStudio/dns-records#readme",
-  "main": "index.js",
+  "exports": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
   "scripts": {
-    "test": "mocha -t 25000 -s 5000"
+    "build": "tsc",
+    "dev": "node --no-warnings --enable-source-maps --import tsx --watch src/index.ts",
+    "test": "node --test"
   },
   "dependencies": {
     "punycode": "^2.1.1"
   },
   "devDependencies": {
-    "mocha": "^9.0.0"
+    "@types/node": "^20.10.6",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
   }
 }
