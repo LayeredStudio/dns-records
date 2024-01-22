@@ -11,7 +11,7 @@ const isDomain = (domain) => {
         domain = domain.substring(0, domain.length - 1);
     }
     const labels = toASCII(domain).split('.').reverse();
-    const labelTest = /^([a-z0-9-]{1,64}|xn[a-z0-9-]{5,})$/i;
+    const labelTest = /^([a-z0-9-_]{1,64}|xn[a-z0-9-]{5,})$/i;
     return labels.length > 1 && labels.every((label, index) => {
         return index ? !label.startsWith('-') && !label.endsWith('-') && labelTest.test(label) : isTld(label);
     });
@@ -125,7 +125,7 @@ export function getAllDnsRecordsStream(domain, options = {}) {
                 if (subdomain && !subdomainsChecked.includes(subdomain)) {
                     runningChecks++;
                     subdomainsChecked.push(subdomain);
-                    getDnsRecords(`${subdomain}.${domain}`, 'A').then(sendRecords);
+                    getDnsRecords(`${subdomain}.${domain}`, 'A', options.resolver).then(sendRecords);
                 }
             }
         }
@@ -151,11 +151,11 @@ export function getAllDnsRecordsStream(domain, options = {}) {
                     addSubdomain(r.data);
                 }
             });
-            getDnsRecords(domain, 'SOA').then(sendRecords);
+            getDnsRecords(domain, 'SOA', options.resolver).then(sendRecords);
             //getDnsRecords(domain, 'CAA').then(sendRecords)
-            getDnsRecords(domain, 'A').then(sendRecords);
-            getDnsRecords(domain, 'AAAA').then(sendRecords);
-            getDnsRecords(domain, 'MX').then(records => {
+            getDnsRecords(domain, 'A', options.resolver).then(sendRecords);
+            getDnsRecords(domain, 'AAAA', options.resolver).then(sendRecords);
+            getDnsRecords(domain, 'MX', options.resolver).then(records => {
                 records.forEach(r => {
                     if (r.data.includes(domain)) {
                         const parts = r.data.split(' ');
@@ -166,7 +166,7 @@ export function getAllDnsRecordsStream(domain, options = {}) {
                 });
                 sendRecords(records);
             });
-            getDnsRecords(domain, 'TXT').then(records => {
+            getDnsRecords(domain, 'TXT', options.resolver).then(records => {
                 records.forEach(r => {
                     // extract subdomains from SPF records
                     if (r.data.includes('v=spf1') && r.data.includes(domain)) {
