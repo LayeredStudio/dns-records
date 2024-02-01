@@ -239,21 +239,16 @@ export async function getAllDnsRecords(domain: string, options: Partial<GetAllDn
 
 	const reader = dnsRecordsStream.getReader();
 
-	return new Promise((resolve) => {
+	return new Promise((resolve, reject) => {
 		const read = () => {
 			reader.read().then(({done, value}) => {
 				if (done) {
-
-					//todo detect wildcards
-
-					resolve(records)
+					resolve(detectWildcardRecords(domain, records))
 				} else {
 					records.push(parseDnsRecord(value))
 					read()
 				}
-			}).catch(error => {
-				console.error('dns err', error);               
-			})
+			}).catch(reject)
 		}
 	
 		read();
@@ -277,4 +272,40 @@ export function parseDnsRecord(record: string|Uint8Array): DnsRecord {
 		type: String(parts[3]),
 		data: String(parts[4]),
 	}
+}
+
+export function detectWildcardRecords(domain: string, records: DnsRecord[], percent = 0.15): DnsRecord[] {
+	const sameDataGroup: { [key: string]: number } = {}
+	const wildcardsFound: string[] = []
+
+	records.forEach(record => {
+		if (['A', 'AAAA', 'CNAME'].includes(record.type)) {
+			const key = `${record.type}-${record.data}`
+			sameDataGroup[key] ||= 0
+			sameDataGroup[key]++
+		}
+	})
+
+	const recordsWithWildcard: DnsRecord[] = []
+
+	records.forEach(record => {
+		if (['A', 'AAAA', 'CNAME'].includes(record.type)) {
+			const key = `${record.type}-${record.data}`
+			const sameData = sameDataGroup[key] || 0
+
+			if (sameData / records.filter(r => r.type === record.type).length < percent) {
+				recordsWithWildcard.push(record)
+			} else if (!wildcardsFound.includes(key)) {
+				wildcardsFound.push(key)
+				recordsWithWildcard.push({
+					...record,
+					name: `*.${domain}`,
+				})
+			}
+		} else {
+			recordsWithWildcard.push(record)
+		}
+	})
+
+	return recordsWithWildcard
 }

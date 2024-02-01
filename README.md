@@ -7,20 +7,14 @@ Uses Cloudflare or Google DNS, has a built-in list of subdomains to test for and
 → See it in action here https://dmns.app
 
 ## Highlights
-* Retrieves really fast DNS records for a domain
-* Discovers all A, AAAA and CNAME for a domain
+* Retrieves DNS records for a domain
+* Discovers (almost) all A, AAAA, CNAME, and TXT for a domain
+* Detects wildcard `*` records
 * Option to specify extra subdomains to check for
-* Provides results in a easy-to-use format
-* Works in all JS runtimes: NodeJS (uses `dig`), CloudFlare Workers, Browsers, Deno, etc
+* Provides results in common format, see `DnsRecord`
+* Works in all JavaScript runtimes: NodeJS (uses `dig`), CloudFlare Workers, Browsers, Deno, etc
 
-## Roadmap
-Aiming to have these features:
-- [x] Retrieve DNS records for a domain -> `getDnsRecords(name: string, type: string = 'A')`
-- [x] Discover common subdomains for a domain -> `getAllDnsRecords(domain: string)`
-- [ ] NS test: all Name Servers are synchronised and reply with same data
-- [ ] NS extra info: response time, NS IP location & ISP
-
-## v2 breaking changes
+## v2 (in dev now) breaking changes
 - ESM only
 - `getAllRecords()` renamed to `getAllDnsRecords()`
 - `getNameServers` is removed, use `getDnsRecords(name: string, type = 'NS')`
@@ -29,8 +23,8 @@ Aiming to have these features:
 
 #### Requirements
 
-- `dig` command for DNS lookups, if using `node-dig` as resolver. https://linux.die.net/man/1/dig
 - `fetch` as a global
+- `dig` command for DNS lookups, if using `node-dig` as resolver. https://linux.die.net/man/1/dig
 
 #### Installation
 
@@ -38,7 +32,7 @@ Aiming to have these features:
 
 #### Usage
 The library has a simple API.
-Use `getAllDnsRecords(query)` to retrieve all DNS records for a domain OR request specific record types with `getDnsRecords(domain, 'TXT')`
+Use `getAllDnsRecords(domain)` to retrieve all DNS records for a domain OR request specific record types with `getDnsRecords(hostname, 'TXT')`
 
 #### Example
 ```js
@@ -49,17 +43,19 @@ const allRecords = await getAllDnsRecords('x.com')
 ```
 
 ## Client API
-- [`getDnsRecords(name, type)`](#dns-records-by-type) - Get DNS records for a hostname
-- [`getAllRecords(hostname)`](#all-dns-records) - Get ALL DNS records for a domain
+- [`getDnsRecords(hostname: string, type: string = 'A', resolver = 'cloudflare-dns'): Promise<DnsRecord[]>`](#dns-records-by-type) - Get DNS records for a hostname
+- [`getAllDnsRecords(domain: string, options): Promise<DnsRecord[]>`](#all-dns-records) - Get all DNS records for a domain
+- [`getAllDnsRecordsStream(domain: string, options): ReadableStream`](#all-dns-records-stream) - Get all DNS records in text format, as they are discovered
 
 #### DNS Records by type
 
-`getDnsRecords(name: string, type: string = 'A'): Promise<DnsRecord[]>`
+`getDnsRecords(name: string, type: string = 'A', resolver = 'cloudflare-dns'): Promise<DnsRecord[]>`
 
 |Params|type|default|description|
 |-----|---|---|---|
-|name |string|   |hostname. Ex: `'x.com'`|
+|name |string|   |hostname. Ex: `'x.com'` or `email.apple.com`|
 |type |string|`A`|record type: Ex: `'TXT'`, `'MX'`, `'CNAME'`|
+
 
 ```js
 import { getDnsRecords } from '@layered/dns-records'
@@ -87,12 +83,12 @@ Returns a promise which resolves with an `DnsRecord[]` of records found:
 
 |Params|type|default|description|
 |-----|---|---|---|
-|domain|string|   |Domain name, ex: `'google.com'`|
+|domain|string|   |Valid domain name, ex: `'google.com'`|
 
 ```js
-import { getAllRecords } from '@layered/dns-records'
+import { getAllDnsRecords } from '@layered/dns-records'
 
-const allRecords = await getAllRecords('x.com')
+const allRecords = await getAllDnsRecords('x.com')
 console.log('DNS all records', allRecords)
 ```
 Returns a Promise which resolves with `DnsRecord[]` of records found:
