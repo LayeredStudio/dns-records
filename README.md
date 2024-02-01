@@ -43,9 +43,9 @@ const allRecords = await getAllDnsRecords('x.com')
 ```
 
 ## Client API
-- [`getDnsRecords(hostname: string, type: string = 'A', resolver = 'cloudflare-dns'): Promise<DnsRecord[]>`](#dns-records-by-type) - Get DNS records for a hostname
-- [`getAllDnsRecords(domain: string, options): Promise<DnsRecord[]>`](#all-dns-records) - Get all DNS records for a domain
-- [`getAllDnsRecordsStream(domain: string, options): ReadableStream`](#all-dns-records-stream) - Get all DNS records in text format, as they are discovered
+- [`getDnsRecords(hostname: string, type: string = 'A', resolver = 'cloudflare-dns')`](#dns-records-by-type) - Get DNS records for a hostname
+- [`getAllDnsRecords(domain: string, options)`](#all-dns-records) - Get all DNS records for a domain
+- [`getAllDnsRecordsStream(domain: string, options): ReadableStream`](#all-dns-records-stream)
 
 #### DNS Records by type
 
@@ -55,6 +55,7 @@ const allRecords = await getAllDnsRecords('x.com')
 |-----|---|---|---|
 |name |string|   |hostname. Ex: `'x.com'` or `email.apple.com`|
 |type |string|`A`|record type: Ex: `'TXT'`, `'MX'`, `'CNAME'`|
+|resolver |string|`cloudflare-dns`|DNS resolver to use: `cloudflare-dns`, `google-dns`, `node-dig`|
 
 
 ```js
@@ -84,6 +85,7 @@ Returns a promise which resolves with an `DnsRecord[]` of records found:
 |Params|type|default|description|
 |-----|---|---|---|
 |domain|string|   |Valid domain name, ex: `'google.com'`|
+|options|object|   |   |
 
 ```js
 import { getAllDnsRecords } from '@layered/dns-records'
