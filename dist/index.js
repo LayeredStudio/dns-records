@@ -190,20 +190,17 @@ export async function getAllDnsRecords(domain, options = {}) {
     const records = [];
     const dnsRecordsStream = getAllDnsRecordsStream(domain, options);
     const reader = dnsRecordsStream.getReader();
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
         const read = () => {
             reader.read().then(({ done, value }) => {
                 if (done) {
-                    //todo detect wildcards
-                    resolve(records);
+                    resolve(detectWildcardRecords(domain, records));
                 }
                 else {
                     records.push(parseDnsRecord(value));
                     read();
                 }
-            }).catch(error => {
-                console.error('dns err', error);
-            });
+            }).catch(reject);
         };
         read();
     });
@@ -222,4 +219,37 @@ export function parseDnsRecord(record) {
         type: String(parts[3]),
         data: String(parts[4]),
     };
+}
+export function detectWildcardRecords(domain, records, percent = 0.15) {
+    const sameDataGroup = {};
+    const wildcardsFound = [];
+    records.forEach(record => {
+        if (['A', 'AAAA', 'CNAME'].includes(record.type)) {
+            const key = `${record.type}-${record.data}`;
+            sameDataGroup[key] ||= 0;
+            sameDataGroup[key]++;
+        }
+    });
+    const recordsWithWildcard = [];
+    records.forEach(record => {
+        if (['A', 'AAAA', 'CNAME'].includes(record.type)) {
+            const key = `${record.type}-${record.data}`;
+            const sameData = sameDataGroup[key] || 0;
+            const recordTypeLength = records.filter(r => r.type === record.type).length;
+            if (sameData / recordTypeLength < percent || recordTypeLength < subdomainsRecords.length / 2) {
+                recordsWithWildcard.push(record);
+            }
+            else if (!wildcardsFound.includes(key)) {
+                wildcardsFound.push(key);
+                recordsWithWildcard.push({
+                    ...record,
+                    name: `*.${domain}`,
+                });
+            }
+        }
+        else {
+            recordsWithWildcard.push(record);
+        }
+    });
+    return recordsWithWildcard;
 }

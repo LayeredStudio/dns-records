@@ -292,8 +292,9 @@ export function detectWildcardRecords(domain: string, records: DnsRecord[], perc
 		if (['A', 'AAAA', 'CNAME'].includes(record.type)) {
 			const key = `${record.type}-${record.data}`
 			const sameData = sameDataGroup[key] || 0
+			const recordTypeLength = records.filter(r => r.type === record.type).length
 
-			if (sameData / records.filter(r => r.type === record.type).length < percent) {
+			if (sameData / recordTypeLength < percent || recordTypeLength < subdomainsRecords.length / 2) {
 				recordsWithWildcard.push(record)
 			} else if (!wildcardsFound.includes(key)) {
 				wildcardsFound.push(key)

@@ -7,3 +7,4 @@ export type GetAllDnsRecordsOptions = {
 export declare function getAllDnsRecordsStream(domain: string, options?: Partial<GetAllDnsRecordsOptions>): ReadableStream;
 export declare function getAllDnsRecords(domain: string, options?: Partial<GetAllDnsRecordsOptions>): Promise<DnsRecord[]>;
 export declare function parseDnsRecord(record: string | Uint8Array): DnsRecord;
+export declare function detectWildcardRecords(domain: string, records: DnsRecord[], percent?: number): DnsRecord[];
