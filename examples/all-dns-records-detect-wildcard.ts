@@ -1,4 +1,4 @@
-import { DnsRecord, getAllDnsRecords } from '../src/index.ts'
+import { getAllDnsRecords } from '../src/index.ts'
 
 const allDnsRecords = await getAllDnsRecords('wordpress.org')
 

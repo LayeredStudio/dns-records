@@ -83,7 +83,13 @@ const dnsResolvers: { [key: string]: Function } = {
 	},
 }
 
-export async function getDnsRecords(name: string, type = 'A', resolver = 'cloudflare-dns'): Promise<DnsRecord[]> {
+/**
+ * Get all DNS records of a given type for a FQDN.
+ * @param name Fully qualified domain name.
+ * @param type DNS record type: A, AAAA, TXT, CNAME, MX, etc.
+ * @param resolver DNS resolver to use. Default: cloudflare-dns.
+ */
+export async function getDnsRecords(name: string, type: string = 'A', resolver: string = 'cloudflare-dns'): Promise<DnsRecord[]> {
 	if (!isDomain(name)) {
 		throw new Error(`"${name}" is not a valid domain name`)
 	}
@@ -106,6 +112,10 @@ export type GetAllDnsRecordsOptions = {
 	subdomains?: string[]
 }
 
+/**
+ * Discover all DNS records for a given domain and return a readable stream. Each record is a text line.
+ * @param domain Valid domain name.
+ */
 export function getAllDnsRecordsStream(domain: string, options: Partial<GetAllDnsRecordsOptions> = {}): ReadableStream {
 	options = {
 		resolver: 'cloudflare-dns',
@@ -232,7 +242,10 @@ export function getAllDnsRecordsStream(domain: string, options: Partial<GetAllDn
 
 	return readable
 }
-
+/**
+ * Discover and return all DNS records for a given domain.
+ * @param domain Valid domain name.
+ */
 export async function getAllDnsRecords(domain: string, options: Partial<GetAllDnsRecordsOptions> = {}): Promise<DnsRecord[]> {
 	const records: DnsRecord[] = []
 	const dnsRecordsStream = getAllDnsRecordsStream(domain, options)
