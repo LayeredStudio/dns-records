@@ -1,4 +1,4 @@
-import { DnsRecord } from './types.js';
+import { DnsRecord } from './index.js';
 /**
  * Get DNS records using the `dig` command
  */

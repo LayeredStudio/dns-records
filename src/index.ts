@@ -1,6 +1,12 @@
 import { toASCII } from 'punycode'
 import { subdomainsRecords } from './subdomains.js'
-import type { DnsRecord } from './types.js'
+
+export type DnsRecord = {
+	name: string
+	type: string
+	ttl: number
+	data: string
+}
 
 const isTld = (tld: string): boolean => {
 	if (tld.startsWith('.')) {
@@ -84,17 +90,17 @@ const dnsResolvers: { [key: string]: Function } = {
 }
 
 /**
- * Get all DNS records of a given type for a FQDN.
+ * Get DNS records of a given type for a FQDN.
  * @param name Fully qualified domain name.
  * @param type DNS record type: A, AAAA, TXT, CNAME, MX, etc.
  * @param resolver DNS resolver to use. Default: cloudflare-dns.
  */
-export async function getDnsRecords(name: string, type: string = 'A', resolver: string = 'cloudflare-dns'): Promise<DnsRecord[]> {
+export async function getDnsRecords(name: string, type: string = 'A', resolver: string|Function = 'cloudflare-dns'): Promise<DnsRecord[]> {
 	if (!isDomain(name)) {
 		throw new Error(`"${name}" is not a valid domain name`)
 	}
 
-	if (resolver in dnsResolvers) {
+	if (typeof resolver === 'string' && resolver in dnsResolvers) {
 		const fn = dnsResolvers[resolver]
 
 		if (typeof fn !== 'function') {
@@ -102,19 +108,22 @@ export async function getDnsRecords(name: string, type: string = 'A', resolver: 
 		}
 
 		return fn(name, type)
-	} else {
-		throw new Error(`Invalid DNS resolver: ${resolver}`)
+	} if (typeof resolver === 'function') {
+		return resolver(name, type)
 	}
+
+	throw new Error(`Invalid DNS resolver: ${resolver}`)
 }
 
 export type GetAllDnsRecordsOptions = {
-	resolver?: string
+	resolver?: string|Function
 	subdomains?: string[]
 }
 
 /**
- * Discover all DNS records for a given domain and return a readable stream. Each record is a text line.
+ * Discover all DNS records for a given domain and stream each record as a text line.
  * @param domain Valid domain name.
+ * @param options Options for DNS resolver, extra subdomains to check, etc.
  */
 export function getAllDnsRecordsStream(domain: string, options: Partial<GetAllDnsRecordsOptions> = {}): ReadableStream {
 	options = {
@@ -242,9 +251,11 @@ export function getAllDnsRecordsStream(domain: string, options: Partial<GetAllDn
 
 	return readable
 }
+
 /**
- * Discover and return all DNS records for a given domain.
+ * Discover all DNS records for a given domain and return an array of records.
  * @param domain Valid domain name.
+ * @param options Options for DNS resolver, extra subdomains to check, etc.
  */
 export async function getAllDnsRecords(domain: string, options: Partial<GetAllDnsRecordsOptions> = {}): Promise<DnsRecord[]> {
 	const records: DnsRecord[] = []
@@ -268,6 +279,10 @@ export async function getAllDnsRecords(domain: string, options: Partial<GetAllDn
 	})
 }
 
+/**
+ * Parse a DNS record string into a DnsRecord object.
+ * @param record DNS record string.
+ */
 export function parseDnsRecord(record: string|Uint8Array): DnsRecord {
 	if (record instanceof Uint8Array) {
 		record = new TextDecoder().decode(record)
@@ -287,6 +302,12 @@ export function parseDnsRecord(record: string|Uint8Array): DnsRecord {
 	}
 }
 
+/**
+ * Detect wildcard DNS records and return a new array with the wildcard records added.
+ * @param domain Domain name.
+ * @param records Array of DNS records.
+ * @param percent Percentage of records with the same data to consider a wildcard.
+ */
 export function detectWildcardRecords(domain: string, records: DnsRecord[], percent = 0.15): DnsRecord[] {
 	const sameDataGroup: { [key: string]: number } = {}
 	const wildcardsFound: string[] = []

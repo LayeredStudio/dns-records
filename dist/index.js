@@ -68,21 +68,33 @@ const dnsResolvers = {
         return records;
     },
 };
+/**
+ * Get DNS records of a given type for a FQDN.
+ * @param name Fully qualified domain name.
+ * @param type DNS record type: A, AAAA, TXT, CNAME, MX, etc.
+ * @param resolver DNS resolver to use. Default: cloudflare-dns.
+ */
 export async function getDnsRecords(name, type = 'A', resolver = 'cloudflare-dns') {
     if (!isDomain(name)) {
         throw new Error(`"${name}" is not a valid domain name`);
     }
-    if (resolver in dnsResolvers) {
+    if (typeof resolver === 'string' && resolver in dnsResolvers) {
         const fn = dnsResolvers[resolver];
         if (typeof fn !== 'function') {
             throw new Error(`Invalid DNS resolver: ${resolver}`);
         }
         return fn(name, type);
     }
-    else {
-        throw new Error(`Invalid DNS resolver: ${resolver}`);
+    if (typeof resolver === 'function') {
+        return resolver(name, type);
     }
+    throw new Error(`Invalid DNS resolver: ${resolver}`);
 }
+/**
+ * Discover all DNS records for a given domain and stream each record as a text line.
+ * @param domain Valid domain name.
+ * @param options Options for DNS resolver, extra subdomains to check, etc.
+ */
 export function getAllDnsRecordsStream(domain, options = {}) {
     options = {
         resolver: 'cloudflare-dns',
@@ -186,6 +198,11 @@ export function getAllDnsRecordsStream(domain, options = {}) {
     });
     return readable;
 }
+/**
+ * Discover all DNS records for a given domain and return an array of records.
+ * @param domain Valid domain name.
+ * @param options Options for DNS resolver, extra subdomains to check, etc.
+ */
 export async function getAllDnsRecords(domain, options = {}) {
     const records = [];
     const dnsRecordsStream = getAllDnsRecordsStream(domain, options);
@@ -205,6 +222,10 @@ export async function getAllDnsRecords(domain, options = {}) {
         read();
     });
 }
+/**
+ * Parse a DNS record string into a DnsRecord object.
+ * @param record DNS record string.
+ */
 export function parseDnsRecord(record) {
     if (record instanceof Uint8Array) {
         record = new TextDecoder().decode(record);
@@ -220,6 +241,12 @@ export function parseDnsRecord(record) {
         data: String(parts[4]),
     };
 }
+/**
+ * Detect wildcard DNS records and return a new array with the wildcard records added.
+ * @param domain Domain name.
+ * @param records Array of DNS records.
+ * @param percent Percentage of records with the same data to consider a wildcard.
+ */
 export function detectWildcardRecords(domain, records, percent = 0.15) {
     const sameDataGroup = {};
     const wildcardsFound = [];
