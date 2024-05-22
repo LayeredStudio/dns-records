@@ -271,10 +271,15 @@ export function getAllDnsRecordsStream(domain: string, options: Partial<GetAllDn
 			getDnsRecords(domain, 'TXT', options.resolver).then(records => {
 				records.forEach(r => {
 					// extract subdomains from SPF records
+					// https://datatracker.ietf.org/doc/html/rfc7208
 					if (r.data.includes('v=spf1') && r.data.includes(domain)) {
 						r.data.split(' ').forEach(spf => {
 							if (spf.startsWith('include:') && spf.endsWith(domain)) {
 								addSubdomain(spf.replace('include:', ''))
+							} else if (spf.startsWith('a:') && spf.endsWith(domain)) {
+								addSubdomain(spf.replace('a:', ''))
+							} else if (spf.startsWith('mx:') && spf.endsWith(domain)) {
+								addSubdomain(spf.replace('mx:', ''))
 							}
 						})
 					}
