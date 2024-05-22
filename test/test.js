@@ -2,7 +2,7 @@ import { strict as assert } from 'node:assert'
 import test from 'node:test'
 
 import { getDnsRecords, getAllDnsRecords } from '../dist/index.js'
-import { getDnsRecordsDig } from '../dist/resolver-node-dig.js'
+import { getDnsRecordsDig } from '../dist/node-resolvers.js'
 
 test('get name servers for google.com (NS)', async () => {
 	const expectedNs = ['ns1.google.com.', 'ns2.google.com.', 'ns3.google.com.', 'ns4.google.com.']
