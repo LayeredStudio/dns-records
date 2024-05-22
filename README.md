@@ -1,8 +1,8 @@
 # 🌍 DNS Records
 
-**@layered/dns-records** is a DNS helper library for JavaScript than can quickly discover and retrieve all DNS records for a domain.
+**@layered/dns-records** is a DNS helper library than can quickly discover and retrieve all DNS records for a domain.
 
-Uses Cloudflare or Google DNS, has a built-in list of subdomains to test for and support for auto-discovering more subdomains based on records found.
+Uses Cloudflare or Google DNS, has a built-in list of subdomains to test for and support for auto-discovering more subdomains.
 
 → See it in action here https://dmns.app
 

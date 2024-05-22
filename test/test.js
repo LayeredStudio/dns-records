@@ -2,13 +2,15 @@ import { strict as assert } from 'node:assert'
 import test from 'node:test'
 
 import { getDnsRecords, getAllDnsRecords } from '../dist/index.js'
+import { getDnsRecordsDig } from '../dist/resolver-node-dig.js'
 
 test('get name servers for google.com (NS)', async () => {
 	const expectedNs = ['ns1.google.com.', 'ns2.google.com.', 'ns3.google.com.', 'ns4.google.com.']
 
-	const [ nsRecordsWithCloudflareDns, nsRecordsWithGoogleDns ] = await Promise.all([
+	const [ nsRecordsWithCloudflareDns, nsRecordsWithGoogleDns, nsRecordsWithNodeDig ] = await Promise.all([
 		getDnsRecords('google.com', 'NS', 'cloudflare-dns'),
 		getDnsRecords('google.com', 'NS', 'google-dns'),
+		getDnsRecords('google.com', 'NS', getDnsRecordsDig),
 	])
 
 	assert.equal(nsRecordsWithCloudflareDns.length, expectedNs.length, 'Number of NameServers doesn\'t match')
@@ -18,6 +20,10 @@ test('get name servers for google.com (NS)', async () => {
 	assert.equal(nsRecordsWithGoogleDns.length, expectedNs.length, 'Number of NameServers doesn\'t match')
 	assert.ok(expectedNs.some(ns => ns === nsRecordsWithGoogleDns[1].data), 'Returned NS doesn\'t match')
 	assert.ok(expectedNs.some(ns => ns === nsRecordsWithGoogleDns[1].data), 'Returned NS doesn\'t match')
+
+	assert.equal(nsRecordsWithNodeDig.length, expectedNs.length, 'Number of NameServers doesn\'t match')
+	assert.ok(expectedNs.some(ns => ns === nsRecordsWithNodeDig[1].data), 'Returned NS doesn\'t match')
+	assert.ok(expectedNs.some(ns => ns === nsRecordsWithNodeDig[1].data), 'Returned NS doesn\'t match')
 });
 
 test('get A records for "mañana.com" (IDN)', async () => {

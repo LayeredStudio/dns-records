@@ -6,6 +6,12 @@ const isTld = (tld) => {
     }
     return /^([a-z]{2,64}|xn[a-z0-9-]{5,})$/i.test(toASCII(tld));
 };
+/**
+ * Basic check to test if a string is a valid domain name.
+ *
+ * @param domain Fully qualified domain name.
+ * @returns True if the string is a valid format for a domain name
+ */
 const isDomain = (domain) => {
     if (domain.endsWith('.')) {
         domain = domain.substring(0, domain.length - 1);
@@ -70,9 +76,25 @@ const dnsResolvers = {
 };
 /**
  * Get DNS records of a given type for a FQDN.
+ *
  * @param name Fully qualified domain name.
  * @param type DNS record type: A, AAAA, TXT, CNAME, MX, etc.
  * @param resolver DNS resolver to use. Default: cloudflare-dns.
+ * @returns Array of discovered `DnsRecord` objects.
+ *
+ * @example Get TXT records for example.com
+ * ```js
+ * import { getDnsRecords } from '@layered/dns-records'
+ *
+ * const txtRecords = await getDnsRecords('example.com', 'TXT')
+ * ```
+ *
+ * @example Get MX records for android.com from Google DNS resolver
+ * ```js
+ * import { getDnsRecords } from '@layered/dns-records'
+ *
+ * const mxRecords = await getDnsRecords('android.com', 'MX', 'google-dns')
+ * ```
  */
 export async function getDnsRecords(name, type = 'A', resolver = 'cloudflare-dns') {
     if (!isDomain(name)) {
@@ -91,9 +113,11 @@ export async function getDnsRecords(name, type = 'A', resolver = 'cloudflare-dns
     throw new Error(`Invalid DNS resolver: ${resolver}`);
 }
 /**
- * Discover all DNS records for a given domain and stream each record as a text line.
+ * Discover all DNS records for a domain name and stream each record as a text line.
+ *
  * @param domain Valid domain name.
  * @param options Options for DNS resolver, extra subdomains to check, etc.
+ * @returns ReadableStream of DNS records.
  */
 export function getAllDnsRecordsStream(domain, options = {}) {
     options = {
@@ -199,9 +223,18 @@ export function getAllDnsRecordsStream(domain, options = {}) {
     return readable;
 }
 /**
- * Discover all DNS records for a given domain and return an array of records.
+ * Discover all DNS records for a domain name and return an array of records.
+ *
  * @param domain Valid domain name.
  * @param options Options for DNS resolver, extra subdomains to check, etc.
+ * @returns Array of all `DnsRecord` discovered for the domain, with wildcard records added.
+ *
+ * @example Get all DNS records for example.com
+ * ```js
+ * import { getAllDnsRecords } from '@layered/dns-records'
+ *
+ * const records = await getAllDnsRecords('example.com')
+ * ```
  */
 export async function getAllDnsRecords(domain, options = {}) {
     const records = [];
@@ -224,7 +257,9 @@ export async function getAllDnsRecords(domain, options = {}) {
 }
 /**
  * Parse a DNS record string into a DnsRecord object.
+ *
  * @param record DNS record string.
+ * @returns `DnsRecord` object.
  */
 export function parseDnsRecord(record) {
     if (record instanceof Uint8Array) {
@@ -243,6 +278,7 @@ export function parseDnsRecord(record) {
 }
 /**
  * Detect wildcard DNS records and return a new array with the wildcard records added.
+ *
  * @param domain Domain name.
  * @param records Array of DNS records.
  * @param percent Percentage of records with the same data to consider a wildcard.

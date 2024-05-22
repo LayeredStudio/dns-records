@@ -1,9 +1,14 @@
 import url from 'node:url'
-const { spawnSync } = await import('node:child_process')
+import { spawnSync } from 'node:child_process'
 import { DnsRecord } from './index.js'
 
 /**
  * Get DNS records using the `dig` command
+ * 
+ * @param names The name(s) to query
+ * @param types The DNS type(s) to query
+ * @param server The DNS server to query. If not provided, the default DNS server on the network will be used
+ * @returns The DNS records
  */
 export async function getDnsRecordsDig(names: string | string[], types: string | string[] = 'A', server?: string): Promise<DnsRecord[]> {
 	// start building the arguments list for the `dig` command

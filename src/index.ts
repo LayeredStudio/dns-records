@@ -1,10 +1,15 @@
 import { toASCII } from 'punycode'
 import { subdomainsRecords } from './subdomains.js'
 
-export type DnsRecord = {
+/** DNS Record object */
+export interface DnsRecord {
+	/** Fully qualified domain name */
 	name: string
+	/** Record type: A, AAAA, CNAME, MX, TXT, etc. */
 	type: string
+	/** Time to live in seconds */
 	ttl: number
+	/** Record data */
 	data: string
 }
 
@@ -16,6 +21,12 @@ const isTld = (tld: string): boolean => {
 	return /^([a-z]{2,64}|xn[a-z0-9-]{5,})$/i.test(toASCII(tld))
 }
 
+/**
+ * Basic check to test if a string is a valid domain name.
+ * 
+ * @param domain Fully qualified domain name.
+ * @returns True if the string is a valid format for a domain name
+ */
 const isDomain = (domain: string): boolean => {
 	if (domain.endsWith('.')) {
 		domain = domain.substring(0, domain.length - 1)
@@ -45,7 +56,7 @@ const dnsTypeNumbers: { [key: number]: string } = {
 }
 
 const dnsResolvers: { [key: string]: Function } = {
-	'cloudflare-dns': async (name: string, type = 'A'): Promise<DnsRecord[]> => {
+	'cloudflare-dns': async (name: string, type: string = 'A'): Promise<DnsRecord[]> => {
 		const re = await fetch(`https://cloudflare-dns.com/dns-query?name=${toASCII(name)}&type=${type}&cd=1`, {
 			headers: {
 				accept: 'application/dns-json',
@@ -68,7 +79,7 @@ const dnsResolvers: { [key: string]: Function } = {
 
 		return records
 	},
-	'google-dns': async (name: string, type = 'A'): Promise<DnsRecord[]> => {
+	'google-dns': async (name: string, type: string = 'A'): Promise<DnsRecord[]> => {
 		const re = await fetch(`https://dns.google/resolve?name=${toASCII(name)}&type=${type}&cd=1`)
 
 		if (!re.ok) {
@@ -91,9 +102,25 @@ const dnsResolvers: { [key: string]: Function } = {
 
 /**
  * Get DNS records of a given type for a FQDN.
+ * 
  * @param name Fully qualified domain name.
  * @param type DNS record type: A, AAAA, TXT, CNAME, MX, etc.
  * @param resolver DNS resolver to use. Default: cloudflare-dns.
+ * @returns Array of discovered `DnsRecord` objects.
+ * 
+ * @example Get TXT records for example.com
+ * ```js
+ * import { getDnsRecords } from '@layered/dns-records'
+ * 
+ * const txtRecords = await getDnsRecords('example.com', 'TXT')
+ * ```
+ * 
+ * @example Get MX records for android.com from Google DNS resolver
+ * ```js
+ * import { getDnsRecords } from '@layered/dns-records'
+ * 
+ * const mxRecords = await getDnsRecords('android.com', 'MX', 'google-dns')
+ * ```
  */
 export async function getDnsRecords(name: string, type: string = 'A', resolver: string|Function = 'cloudflare-dns'): Promise<DnsRecord[]> {
 	if (!isDomain(name)) {
@@ -115,15 +142,26 @@ export async function getDnsRecords(name: string, type: string = 'A', resolver: 
 	throw new Error(`Invalid DNS resolver: ${resolver}`)
 }
 
+/** Options for discovering DNS records. */
 export type GetAllDnsRecordsOptions = {
+	/**
+	 * Which DNS resolver to use for DNS lookup.
+	 * 
+	 * Options: cloudflare-dns, google-dns, custom resolver `Function`.
+	 * 
+	 * @default 'cloudflare-dns'
+	 * */
 	resolver?: string|Function
+	/** List of extra subdomains to check for */
 	subdomains?: string[]
 }
 
 /**
- * Discover all DNS records for a given domain and stream each record as a text line.
+ * Discover all DNS records for a domain name and stream each record as a text line.
+ * 
  * @param domain Valid domain name.
  * @param options Options for DNS resolver, extra subdomains to check, etc.
+ * @returns ReadableStream of DNS records.
  */
 export function getAllDnsRecordsStream(domain: string, options: Partial<GetAllDnsRecordsOptions> = {}): ReadableStream {
 	options = {
@@ -253,9 +291,18 @@ export function getAllDnsRecordsStream(domain: string, options: Partial<GetAllDn
 }
 
 /**
- * Discover all DNS records for a given domain and return an array of records.
+ * Discover all DNS records for a domain name and return an array of records.
+ * 
  * @param domain Valid domain name.
  * @param options Options for DNS resolver, extra subdomains to check, etc.
+ * @returns Array of all `DnsRecord` discovered for the domain, with wildcard records added.
+ * 
+ * @example Get all DNS records for example.com
+ * ```js
+ * import { getAllDnsRecords } from '@layered/dns-records'
+ * 
+ * const records = await getAllDnsRecords('example.com')
+ * ```
  */
 export async function getAllDnsRecords(domain: string, options: Partial<GetAllDnsRecordsOptions> = {}): Promise<DnsRecord[]> {
 	const records: DnsRecord[] = []
@@ -281,7 +328,9 @@ export async function getAllDnsRecords(domain: string, options: Partial<GetAllDn
 
 /**
  * Parse a DNS record string into a DnsRecord object.
+ * 
  * @param record DNS record string.
+ * @returns `DnsRecord` object.
  */
 export function parseDnsRecord(record: string|Uint8Array): DnsRecord {
 	if (record instanceof Uint8Array) {
@@ -304,6 +353,7 @@ export function parseDnsRecord(record: string|Uint8Array): DnsRecord {
 
 /**
  * Detect wildcard DNS records and return a new array with the wildcard records added.
+ * 
  * @param domain Domain name.
  * @param records Array of DNS records.
  * @param percent Percentage of records with the same data to consider a wildcard.
