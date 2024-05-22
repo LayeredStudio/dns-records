@@ -1,15 +1,15 @@
 import { toASCII } from 'punycode'
 import { subdomainsRecords } from './subdomains.js'
 
-/** DNS Record object */
+/** DNS Record object, with type, ttl and value */
 export interface DnsRecord {
-	/** Fully qualified domain name */
+	/** Fully qualified domain name (example.com, mail.google.com, analytics.x.com) */
 	name: string
 	/** Record type: A, AAAA, CNAME, MX, TXT, etc. */
 	type: string
-	/** Time to live in seconds */
+	/** Time to live (in seconds) for this record */
 	ttl: number
-	/** Record data */
+	/** Record data: IP for A or AAAA, fqdn for CNAME, etc */
 	data: string
 }
 
@@ -210,9 +210,10 @@ export function getAllDnsRecordsStream(domain: string, options: Partial<GetAllDn
 	const reqDone = () => {
 		// if we have all the records, check for subdomains
 		if (--runningChecks === 0) {
+
+			// check for A,AAAA,CNAME subdomains
 			while (subdomainsExtra.length) {
 				const subdomain = subdomainsExtra.shift()
-				//console.log('sub', subdomain, !subdomainsChecked.includes(subdomain))
 
 				if (subdomain && !subdomainsChecked.includes(subdomain)) {
 					runningChecks++
@@ -220,6 +221,8 @@ export function getAllDnsRecordsStream(domain: string, options: Partial<GetAllDn
 					getDnsRecords(`${subdomain}.${domain}`, 'A', options.resolver).then(sendRecords)
 				}
 			}
+
+			//todo check for txt records for subdomains
 		}
 
 		if (runningChecks === 0) {
@@ -362,6 +365,7 @@ export function parseDnsRecord(record: string|Uint8Array): DnsRecord {
  * @param domain Domain name.
  * @param records Array of DNS records.
  * @param percent Percentage of records with the same data to consider a wildcard.
+ * @returns Array of DNS records with wildcard records grouped as `*.domain`.
  */
 export function detectWildcardRecords(domain: string, records: DnsRecord[], percent = 0.15): DnsRecord[] {
 	const sameDataGroup: { [key: string]: number } = {}
@@ -383,6 +387,7 @@ export function detectWildcardRecords(domain: string, records: DnsRecord[], perc
 			const sameData = sameDataGroup[key] || 0
 			const recordTypeLength = records.filter(r => r.type === record.type).length
 
+			// ?? make the formula easier to understand, already don't know how it works
 			if (sameData / recordTypeLength < percent || recordTypeLength < subdomainsRecords.length / 2) {
 				recordsWithWildcard.push(record)
 			} else if (!wildcardsFound.includes(key)) {

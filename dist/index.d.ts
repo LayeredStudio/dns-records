@@ -1,12 +1,12 @@
-/** DNS Record object */
+/** DNS Record object, with type, ttl and value */
 export interface DnsRecord {
-    /** Fully qualified domain name */
+    /** Fully qualified domain name (example.com, mail.google.com, analytics.x.com) */
     name: string;
     /** Record type: A, AAAA, CNAME, MX, TXT, etc. */
     type: string;
-    /** Time to live in seconds */
+    /** Time to live (in seconds) for this record */
     ttl: number;
-    /** Record data */
+    /** Record data: IP for A or AAAA, fqdn for CNAME, etc */
     data: string;
 }
 /**
@@ -81,5 +81,6 @@ export declare function parseDnsRecord(record: string | Uint8Array): DnsRecord;
  * @param domain Domain name.
  * @param records Array of DNS records.
  * @param percent Percentage of records with the same data to consider a wildcard.
+ * @returns Array of DNS records with wildcard records grouped as `*.domain`.
  */
 export declare function detectWildcardRecords(domain: string, records: DnsRecord[], percent?: number): DnsRecord[];

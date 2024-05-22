@@ -12,19 +12,14 @@ Uses Cloudflare or Google DNS, has a built-in list of subdomains to test for and
 * Detects wildcard `*` records
 * Option to specify extra subdomains to check for
 * Provides results in common format, see `DnsRecord`
-* Works in all JavaScript runtimes: NodeJS (uses `dig`), CloudFlare Workers, Browsers, Deno, etc
-
-## v2 (in dev now) breaking changes
-- ESM only
-- `getAllRecords()` renamed to `getAllDnsRecords()`
-- `getNameServers` is removed, use `getDnsRecords(name: string, type = 'NS')`
+* Works in all JavaScript runtimes: Browsers, NodeJS, CloudFlare Workers, Deno, Bun, etc
 
 ## Getting Started
 
 #### Requirements
 
 - `fetch` as a global
-- `dig` command for DNS lookups, if using `node-dig` as resolver. https://linux.die.net/man/1/dig
+- `dig` command for DNS lookups, if using `node-dig` resolver. https://linux.die.net/man/1/dig
 
 #### Installation
 

@@ -155,15 +155,16 @@ export function getAllDnsRecordsStream(domain, options = {}) {
     const reqDone = () => {
         // if we have all the records, check for subdomains
         if (--runningChecks === 0) {
+            // check for A,AAAA,CNAME subdomains
             while (subdomainsExtra.length) {
                 const subdomain = subdomainsExtra.shift();
-                //console.log('sub', subdomain, !subdomainsChecked.includes(subdomain))
                 if (subdomain && !subdomainsChecked.includes(subdomain)) {
                     runningChecks++;
                     subdomainsChecked.push(subdomain);
                     getDnsRecords(`${subdomain}.${domain}`, 'A', options.resolver).then(sendRecords);
                 }
             }
+            //todo check for txt records for subdomains
         }
         if (runningChecks === 0) {
             writer.close();
@@ -205,10 +206,17 @@ export function getAllDnsRecordsStream(domain, options = {}) {
             getDnsRecords(domain, 'TXT', options.resolver).then(records => {
                 records.forEach(r => {
                     // extract subdomains from SPF records
+                    // https://datatracker.ietf.org/doc/html/rfc7208
                     if (r.data.includes('v=spf1') && r.data.includes(domain)) {
                         r.data.split(' ').forEach(spf => {
                             if (spf.startsWith('include:') && spf.endsWith(domain)) {
                                 addSubdomain(spf.replace('include:', ''));
+                            }
+                            else if (spf.startsWith('a:') && spf.endsWith(domain)) {
+                                addSubdomain(spf.replace('a:', ''));
+                            }
+                            else if (spf.startsWith('mx:') && spf.endsWith(domain)) {
+                                addSubdomain(spf.replace('mx:', ''));
                             }
                         });
                     }
@@ -282,6 +290,7 @@ export function parseDnsRecord(record) {
  * @param domain Domain name.
  * @param records Array of DNS records.
  * @param percent Percentage of records with the same data to consider a wildcard.
+ * @returns Array of DNS records with wildcard records grouped as `*.domain`.
  */
 export function detectWildcardRecords(domain, records, percent = 0.15) {
     const sameDataGroup = {};
@@ -299,6 +308,7 @@ export function detectWildcardRecords(domain, records, percent = 0.15) {
             const key = `${record.type}-${record.data}`;
             const sameData = sameDataGroup[key] || 0;
             const recordTypeLength = records.filter(r => r.type === record.type).length;
+            // ?? make the formula easier to understand, already don't know how it works
             if (sameData / recordTypeLength < percent || recordTypeLength < subdomainsRecords.length / 2) {
                 recordsWithWildcard.push(record);
             }
