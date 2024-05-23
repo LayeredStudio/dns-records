@@ -99,13 +99,9 @@ export async function getDnsRecords(name: string, type: string = 'A', resolver?:
 
 /** Options for discovering DNS records. */
 export type GetAllDnsRecordsOptions = {
-	/**
-	 * Which DNS resolver to use for DNS lookup.
-	 * 
-	 * Options: cloudflare-dns, google-dns, node-dns, node-dig, deno-dns
-	 */
+	/** Which DNS resolver to use for DNS lookup. */
 	resolver?: 'cloudflare-dns' | 'google-dns' | 'node-dns' | 'node-dig' | 'deno-dns'
-	/** Skip DNS check for common subdomains from built-in list. `true` by default */
+	/** Check for common subdomains from built-in list. `true` by default */
 	commonSubdomainsCheck?: boolean
 	/** List of extra subdomains to check for */
 	subdomains?: string[]
@@ -261,13 +257,22 @@ export function getAllDnsRecordsStream(domain: string, options: Partial<GetAllDn
  * 
  * @param domain Valid domain name.
  * @param options Options for DNS resolver, extra subdomains to check, etc.
- * @returns Array of all `DnsRecord` discovered for the domain, with wildcard records added.
+ * @returns Array of all `DnsRecord` discovered for the domain, with wildcard record added.
  * 
- * @example Get all DNS records for example.com
+ * @example Get all DNS records for example.com with best-for-runtime DNS resolver
  * ```js
  * import { getAllDnsRecords } from '@layered/dns-records'
  * 
  * const records = await getAllDnsRecords('example.com')
+ * ```
+ * 
+ * @example Get all DNS records from `cloudflare-dns` DNS resolver
+ * ```js
+ * import { getAllDnsRecords } from '@layered/dns-records'
+ * 
+ * const records = await getAllDnsRecords('example.com', {
+ *   resolver: 'cloudflare-dns',
+ * })
  * ```
  */
 export async function getAllDnsRecords(domain: string, options: Partial<GetAllDnsRecordsOptions> = {}): Promise<DnsRecord[]> {
@@ -318,7 +323,7 @@ export function parseDnsRecord(record: string|Uint8Array): DnsRecord {
 }
 
 /**
- * Detect wildcard DNS records and return a new array with the wildcard records added.
+ * Detect wildcard DNS records and return a new array with the wildcard record added.
  * 
  * @param domain Domain name.
  * @param records Array of DNS records.
