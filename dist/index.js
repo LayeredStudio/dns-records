@@ -1,4 +1,5 @@
 import { toASCII } from 'punycode';
+import { dnsRecordsCloudflare, dnsRecordsGoogle, dnsRecordsNodeDig, dnsRecordsNodeDns } from './dns-resolvers.js';
 import { subdomainsRecords } from './subdomains.js';
 const isTld = (tld) => {
     if (tld.startsWith('.')) {
@@ -22,64 +23,23 @@ const isDomain = (domain) => {
         return index ? !label.startsWith('-') && !label.endsWith('-') && labelTest.test(label) : isTld(label);
     });
 };
-const dnsTypeNumbers = {
-    1: 'A',
-    2: 'NS',
-    5: 'CNAME',
-    6: 'SOA',
-    12: 'PTR',
-    15: 'MX',
-    16: 'TXT',
-    24: 'SIG',
-    25: 'KEY',
-    28: 'AAAA',
-    33: 'SRV',
-    257: 'CAA',
-};
-const dnsResolvers = {
-    'cloudflare-dns': async (name, type = 'A') => {
-        const re = await fetch(`https://cloudflare-dns.com/dns-query?name=${toASCII(name)}&type=${type}&cd=1`, {
-            headers: {
-                accept: 'application/dns-json',
-            }
-        });
-        if (!re.ok) {
-            throw new Error(`Error fetching DNS records for ${name}: ${re.status} ${re.statusText}`);
-        }
-        const json = await re.json();
-        const records = (json.Answer || []).map((record) => {
-            return {
-                name: record.name,
-                type: dnsTypeNumbers[record.type] || String(record.type),
-                ttl: record.TTL,
-                data: record.data,
-            };
-        });
-        return records;
-    },
-    'google-dns': async (name, type = 'A') => {
-        const re = await fetch(`https://dns.google/resolve?name=${toASCII(name)}&type=${type}&cd=1`);
-        if (!re.ok) {
-            throw new Error(`Error fetching DNS records for ${name}: ${re.status} ${re.statusText}`);
-        }
-        const json = await re.json();
-        const records = (json.Answer || []).map((record) => {
-            return {
-                name: record.name,
-                type: dnsTypeNumbers[record.type] || String(record.type),
-                ttl: record.TTL,
-                data: record.data,
-            };
-        });
-        return records;
-    },
-};
+function bestDnsResolverForThisRuntime() {
+    if (navigator.userAgent === 'Cloudflare-Workers') {
+        return 'cloudflare-dns';
+    }
+    else if (navigator.userAgent.startsWith('Node.js/')) {
+        return 'node-dns';
+    }
+    else {
+        return 'google-dns';
+    }
+}
 /**
  * Get DNS records of a given type for a FQDN.
  *
  * @param name Fully qualified domain name.
  * @param type DNS record type: A, AAAA, TXT, CNAME, MX, etc.
- * @param resolver DNS resolver to use. Default: cloudflare-dns.
+ * @param resolver Which DNS resolver to use. If not specified, the best DNS resolver for this runtime will be used.
  * @returns Array of discovered `DnsRecord` objects.
  *
  * @example Get TXT records for example.com
@@ -96,19 +56,27 @@ const dnsResolvers = {
  * const mxRecords = await getDnsRecords('android.com', 'MX', 'google-dns')
  * ```
  */
-export async function getDnsRecords(name, type = 'A', resolver = 'cloudflare-dns') {
+export async function getDnsRecords(name, type = 'A', resolver) {
     if (!isDomain(name)) {
         throw new Error(`"${name}" is not a valid domain name`);
     }
-    if (typeof resolver === 'string' && resolver in dnsResolvers) {
-        const fn = dnsResolvers[resolver];
-        if (typeof fn !== 'function') {
-            throw new Error(`Invalid DNS resolver: ${resolver}`);
-        }
-        return fn(name, type);
+    if (!resolver) {
+        resolver = bestDnsResolverForThisRuntime();
     }
-    if (typeof resolver === 'function') {
-        return resolver(name, type);
+    if (resolver === 'cloudflare-dns') {
+        return dnsRecordsCloudflare(name, type);
+    }
+    else if (resolver === 'google-dns') {
+        return dnsRecordsGoogle(name, type);
+    }
+    else if (resolver === 'node-dig') {
+        return dnsRecordsNodeDig(name, type);
+    }
+    else if (resolver === 'node-dns') {
+        return dnsRecordsNodeDns(name, type);
+    }
+    else if (resolver === 'deno-dns') {
+        throw new Error('Deno DNS not yet implemented');
     }
     throw new Error(`Invalid DNS resolver: ${resolver}`);
 }
@@ -121,7 +89,6 @@ export async function getDnsRecords(name, type = 'A', resolver = 'cloudflare-dns
  */
 export function getAllDnsRecordsStream(domain, options = {}) {
     options = {
-        resolver: 'cloudflare-dns',
         subdomains: [],
         ...options,
     };

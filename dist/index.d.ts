@@ -14,7 +14,7 @@ export interface DnsRecord {
  *
  * @param name Fully qualified domain name.
  * @param type DNS record type: A, AAAA, TXT, CNAME, MX, etc.
- * @param resolver DNS resolver to use. Default: cloudflare-dns.
+ * @param resolver Which DNS resolver to use. If not specified, the best DNS resolver for this runtime will be used.
  * @returns Array of discovered `DnsRecord` objects.
  *
  * @example Get TXT records for example.com
@@ -31,17 +31,15 @@ export interface DnsRecord {
  * const mxRecords = await getDnsRecords('android.com', 'MX', 'google-dns')
  * ```
  */
-export declare function getDnsRecords(name: string, type?: string, resolver?: string | Function): Promise<DnsRecord[]>;
+export declare function getDnsRecords(name: string, type?: string, resolver?: string): Promise<DnsRecord[]>;
 /** Options for discovering DNS records. */
 export type GetAllDnsRecordsOptions = {
     /**
      * Which DNS resolver to use for DNS lookup.
      *
-     * Options: cloudflare-dns, google-dns, custom resolver `Function`.
-     *
-     * @default 'cloudflare-dns'
+     * Options: cloudflare-dns, google-dns, node-dns, node-dig, deno-dns
      * */
-    resolver?: string | Function;
+    resolver?: string;
     /** List of extra subdomains to check for */
     subdomains?: string[];
 };
