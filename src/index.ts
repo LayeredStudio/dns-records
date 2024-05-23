@@ -42,10 +42,10 @@ const isDomain = (domain: string): boolean => {
 }
 
 function bestDnsResolverForThisRuntime(): string {
-	if (navigator?.userAgent === 'Cloudflare-Workers') {
-		return 'cloudflare-dns'
-	} else if (navigator?.userAgent.startsWith('Node.js/')) {
+	if (globalThis.process?.release?.name === 'node') {
 		return 'node-dns'
+	} else if (globalThis.navigator?.userAgent === 'Cloudflare-Workers') {
+		return 'cloudflare-dns'
 	} else {
 		return 'google-dns'
 	}
