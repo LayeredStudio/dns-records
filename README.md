@@ -11,6 +11,7 @@
 
 → See it in action here https://dmns.app
 
+
 ## Getting Started
 
 #### Installation
@@ -29,6 +30,7 @@ const txtRecords = await getDnsRecords('google.com', 'TXT')
 const allRecords = await getAllDnsRecords('x.com')
 ```
 
+
 ## DNS Resolvers
 
 Here is the list of supported DNS resolvers:
@@ -40,6 +42,7 @@ Here is the list of supported DNS resolvers:
 |`node-dns`|Works only in Node.js|Uses [Node.js DNS module](https://nodejs.org/api/dns.html)|
 |`node-dig`|Works only in Node.js|Uses [`dig` command](https://www.ibm.com/docs/en/aix/7.3?topic=d-dig-command)|
 |`deno-dns`|Works only in Deno|Uses [Deno.resolveDns]([https://nodejs.org/api/dns.html](https://deno.land/api?s=Deno.resolveDns))|
+
 
 ## Client API
 - [`getDnsRecords(hostname: string, type: string = 'A', resolver?)`](#dns-records-by-type) - Get DNS records for a hostname
