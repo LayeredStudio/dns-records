@@ -40,6 +40,8 @@ export type GetAllDnsRecordsOptions = {
      * Options: cloudflare-dns, google-dns, node-dns, node-dig, deno-dns
      */
     resolver?: 'cloudflare-dns' | 'google-dns' | 'node-dns' | 'node-dig' | 'deno-dns';
+    /** Skip DNS check for common subdomains from built-in list. `true` by default */
+    commonSubdomainsCheck?: boolean;
     /** List of extra subdomains to check for */
     subdomains?: string[];
 };

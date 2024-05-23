@@ -90,6 +90,7 @@ export async function getDnsRecords(name, type = 'A', resolver) {
 export function getAllDnsRecordsStream(domain, options = {}) {
     options = {
         subdomains: [],
+        commonSubdomainsCheck: true,
         ...options,
     };
     if (!isDomain(domain)) {
@@ -103,9 +104,12 @@ export function getAllDnsRecordsStream(domain, options = {}) {
     const recordsHashes = [];
     // records that can expose subdomains
     const subdomainsChecked = [];
-    const subdomainsExtra = [...subdomainsRecords];
+    const subdomainsExtra = [];
     if (options.subdomains) {
-        subdomainsExtra.unshift(...options.subdomains);
+        subdomainsExtra.push(...options.subdomains);
+    }
+    if (options.commonSubdomainsCheck) {
+        subdomainsExtra.push(...subdomainsRecords);
     }
     const sendRecord = (record) => {
         const hash = `${record.name}-${record.type}-${record.data}`;

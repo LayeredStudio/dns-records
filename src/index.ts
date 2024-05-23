@@ -105,6 +105,8 @@ export type GetAllDnsRecordsOptions = {
 	 * Options: cloudflare-dns, google-dns, node-dns, node-dig, deno-dns
 	 */
 	resolver?: 'cloudflare-dns' | 'google-dns' | 'node-dns' | 'node-dig' | 'deno-dns'
+	/** Skip DNS check for common subdomains from built-in list. `true` by default */
+	commonSubdomainsCheck?: boolean
 	/** List of extra subdomains to check for */
 	subdomains?: string[]
 }
@@ -119,6 +121,7 @@ export type GetAllDnsRecordsOptions = {
 export function getAllDnsRecordsStream(domain: string, options: Partial<GetAllDnsRecordsOptions> = {}): ReadableStream {
 	options = {
 		subdomains: [],
+		commonSubdomainsCheck: true,
 		...options,
 	}
 
@@ -137,9 +140,12 @@ export function getAllDnsRecordsStream(domain: string, options: Partial<GetAllDn
 
 	// records that can expose subdomains
 	const subdomainsChecked: String[] = []
-	const subdomainsExtra = [...subdomainsRecords]
+	const subdomainsExtra: String[] = []
 	if (options.subdomains) {
-		subdomainsExtra.unshift(...options.subdomains)
+		subdomainsExtra.push(...options.subdomains)
+	}
+	if (options.commonSubdomainsCheck) {
+		subdomainsExtra.push(...subdomainsRecords)
 	}
 
 	const sendRecord = (record: DnsRecord) => {
