@@ -24,10 +24,10 @@ const isDomain = (domain) => {
     });
 };
 function bestDnsResolverForThisRuntime() {
-    if (navigator.userAgent === 'Cloudflare-Workers') {
+    if (navigator?.userAgent === 'Cloudflare-Workers') {
         return 'cloudflare-dns';
     }
-    else if (navigator.userAgent.startsWith('Node.js/')) {
+    else if (navigator?.userAgent.startsWith('Node.js/')) {
         return 'node-dns';
     }
     else {
