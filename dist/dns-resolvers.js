@@ -26,7 +26,7 @@ export async function dnsRecordsCloudflare(name, type = 'A') {
     const records = (json.Answer || []).map((record) => {
         const type = dnsTypeNumbers[record.type] || String(record.type);
         let data = record.data;
-        if (['CNAME', 'NS'].includes(type) && record.data.endsWith('.')) {
+        if (['CNAME', 'NS'].includes(type) && data.endsWith('.')) {
             data = data.slice(0, -1);
         }
         return { name: record.name, type, ttl: record.TTL, data };
@@ -42,7 +42,7 @@ export async function dnsRecordsGoogle(name, type = 'A') {
     const records = (json.Answer || []).map((record) => {
         const type = dnsTypeNumbers[record.type] || String(record.type);
         let data = record.data;
-        if (['CNAME', 'NS'].includes(type) && record.data.endsWith('.')) {
+        if (['CNAME', 'NS'].includes(type) && data.endsWith('.')) {
             data = data.slice(0, -1);
         }
         return {
@@ -104,15 +104,15 @@ export async function dnsRecordsNodeDig(names, types = 'A', server) {
         // replace tab(s) with space, then split by space
         const parts = line.replace(/[\t]+/g, " ").split(" ");
         let name = String(parts[0]);
+        const type = String(parts[3]);
+        let data = parts.slice(4).join(" ");
         if (name.endsWith('.')) {
             name = name.slice(0, -1);
         }
-        dnsRecords.push({
-            name,
-            ttl: Number(parts[1]),
-            type: String(parts[3]),
-            data: parts.slice(4).join(" ")
-        });
+        if (['CNAME', 'NS'].includes(type) && data.endsWith('.')) {
+            data = data.slice(0, -1);
+        }
+        dnsRecords.push({ name, ttl: Number(parts[1]), type, data });
     });
     return dnsRecords;
 }
