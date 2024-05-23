@@ -43,13 +43,15 @@ test('get A records for "mañana.com" (IDN)', async () => {
 });
 
 test('get TXT records for "cloudflare.com"', async () => {
-	const [ txtRecordsWithCloudflareDns, txtRecordsWithGoogleDns ] = await Promise.all([
+	const [ txtRecordsWithCloudflareDns, txtRecordsWithGoogleDns, txtRecordsWithNodeDns ] = await Promise.all([
 		getDnsRecords('cloudflare.com', 'TXT', 'cloudflare-dns'),
 		getDnsRecords('cloudflare.com', 'TXT', 'google-dns'),
+		getDnsRecords('cloudflare.com', 'TXT', 'node-dns'),
 	])
 
 	assert.notEqual(txtRecordsWithCloudflareDns.length, 0, 'No TXT records returned')
 	assert.equal(txtRecordsWithCloudflareDns.length, txtRecordsWithGoogleDns.length, 'TXT records length between `google-dns` and `cloudflare-dns` doesn\'t match')
+	assert.equal(txtRecordsWithGoogleDns.length, txtRecordsWithNodeDns.length, 'TXT records length between `cloudflare-dns` and `node-dns` doesn\'t match')
 });
 
 test('get all DNS records for "x.com"', async () => {
@@ -62,15 +64,13 @@ test('get all DNS records for "x.com"', async () => {
 	assert.notEqual(dnsRecords.find(record => record.type === 'TXT').length > 0, 'No TXT records returned')
 });
 
-/* 
 test('should detect the wildcard subdomains for "wordpress.org"', async () => {
-	const records = await getAllRecords('wordpress.org')
-	const as = records.A.map(record => record.name)
-	const cnames = records.CNAME.map(record => record.name)
+	const dnsRecords = await getAllDnsRecords('wordpress.org')
 
-	assert(records.A.length > 0, 'No A records returned')
-	assert(records.NS.length > 0, 'No NS records returned')
-	assert(as.includes('*.wordpress.org'), 'No * record found for A')
-	assert(cnames.includes('*.wordpress.org'), 'No * record found for CNAME')
+	const nsRecords = dnsRecords.find(record => record.type === 'NS')
+	const aRecords = dnsRecords.find(record => record.type === 'A')
+
+	assert.notEqual(nsRecords.length, 0, 'No NS records returned')
+	assert.notEqual(aRecords.length, 0, 'No A records returned')
+	assert.ok(dnsRecords.find(record => record.name === '*.wordpress.org'), 'Expected *.wordpress.org record not found')
 });
-*/

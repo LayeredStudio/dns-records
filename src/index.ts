@@ -103,8 +103,8 @@ export type GetAllDnsRecordsOptions = {
 	 * Which DNS resolver to use for DNS lookup.
 	 * 
 	 * Options: cloudflare-dns, google-dns, node-dns, node-dig, deno-dns
-	 * */
-	resolver?: string
+	 */
+	resolver?: 'cloudflare-dns' | 'google-dns' | 'node-dns' | 'node-dig' | 'deno-dns'
 	/** List of extra subdomains to check for */
 	subdomains?: string[]
 }

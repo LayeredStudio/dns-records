@@ -1,6 +1,8 @@
 import { getAllDnsRecords } from '../src/index.ts'
 
-const allDnsRecords = await getAllDnsRecords('wordpress.org')
+const domain = 'wordpress.org'
 
-console.log(allDnsRecords.length)
+const allDnsRecords = await getAllDnsRecords(domain)
+
+console.log(`${allDnsRecords.length} DNS Records found for ${domain}`)
 console.log(allDnsRecords)
