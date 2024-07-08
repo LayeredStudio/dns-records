@@ -28,7 +28,7 @@ export async function dnsRecordsCloudflare(name: string, type: string = 'A'): Pr
 	}
 
 	const json: any = await re.json()
-	const records: DnsRecord[] = (json.Answer || []).map((record: any) => {
+	const records: DnsRecord[] = (json.Answer || json.Authority || []).map((record: any) => {
 		const type = dnsTypeNumbers[record.type] || String(record.type)
 		let data = record.data
 
@@ -50,7 +50,7 @@ export async function dnsRecordsGoogle(name: string, type: string = 'A'): Promis
 	}
 
 	const json: any = await re.json()
-	const records: DnsRecord[] = (json.Answer || []).map((record: any) => {
+	const records: DnsRecord[] = (json.Answer || json.Authority || []).map((record: any) => {
 		const type = dnsTypeNumbers[record.type] || String(record.type)
 		let data = record.data
 
