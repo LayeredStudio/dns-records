@@ -1,7 +1,7 @@
 import { strict as assert } from 'node:assert'
 import test from 'node:test'
 
-import { getDnsRecords, getAllDnsRecords } from '../dist/index.js'
+import { getDnsRecords, getAllDnsRecords } from '../src/index.ts'
 
 test('get name servers for google.com (NS)', async () => {
 	const expectedNs = ['ns1.google.com', 'ns2.google.com', 'ns3.google.com', 'ns4.google.com']
@@ -58,17 +58,17 @@ test('get all DNS records for "x.com"', async () => {
 	const dnsRecords = await getAllDnsRecords('x.com')
 
 	assert.notEqual(dnsRecords.length, 0, 'No DNS Records returned')
-	assert.notEqual(dnsRecords.find(record => record.type === 'NS').length > 0, 'No NS records returned')
-	assert.notEqual(dnsRecords.find(record => record.type === 'A').length, 0, 'No A records returned')
-	assert.notEqual(dnsRecords.find(record => record.type === 'MX').length > 0, 'No MX records returned')
-	assert.notEqual(dnsRecords.find(record => record.type === 'TXT').length > 0, 'No TXT records returned')
+	assert.ok(dnsRecords.find(record => record.type === 'NS'), 'No NS records returned')
+	assert.ok(dnsRecords.find(record => record.type === 'A'), 'No A records returned')
+	assert.ok(dnsRecords.find(record => record.type === 'MX'), 'No MX records returned')
+	assert.ok(dnsRecords.find(record => record.type === 'TXT'), 'No TXT records returned')
 });
 
 test('should detect the wildcard subdomains for "wordpress.org"', async () => {
 	const dnsRecords = await getAllDnsRecords('wordpress.org')
 
-	const nsRecords = dnsRecords.find(record => record.type === 'NS')
-	const aRecords = dnsRecords.find(record => record.type === 'A')
+	const nsRecords = dnsRecords.filter(record => record.type === 'NS')
+	const aRecords = dnsRecords.filter(record => record.type === 'A')
 
 	assert.notEqual(nsRecords.length, 0, 'No NS records returned')
 	assert.notEqual(aRecords.length, 0, 'No A records returned')

@@ -25,8 +25,8 @@
   "sideEffects": false,
   "scripts": {
     "build": "tsc",
-    "dev": "node --no-warnings --enable-source-maps --import tsx --watch src/index.ts",
-    "test": "node --test"
+    "dev": "node --enable-source-maps --import tsx/esm --watch src/index.ts",
+    "test": "node --test --import tsx/esm test/**/*.ts"
   },
   "dependencies": {
     "punycode": "^2.1.1"
