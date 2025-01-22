@@ -1,5 +1,5 @@
 
-// A, AAAA, CNAME records
+// Common A, AAAA, CNAME records
 export const subdomainsRecords: String[] = [
     'admin',
     'analytics',
@@ -37,7 +37,7 @@ export const subdomainsRecords: String[] = [
     'webmail',
 ];
 
-// common found TXT records
+// Common TXT records
 export const txtRecords: String[] = [
     '_amazonses',
     '_dmarc',
