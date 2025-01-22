@@ -53,17 +53,17 @@ export async function dnsRecordsGoogle(name: string, type: string = 'A'): Promis
 	const records: DnsRecord[] = (json.Answer || []).map((record: any) => {
 		const type = dnsTypeNumbers[record.type] || String(record.type)
 		let data = record.data
+		let name = record.name
 
 		if (['CNAME', 'NS'].includes(type) && data.endsWith('.')) {
 			data = data.slice(0, -1)
 		}
 
-		return {
-			name: record.name,
-			type,
-			ttl: record.TTL,
-			data,
+		if (name.endsWith('.')) {
+			name = name.slice(0, -1)
 		}
+
+		return { name, type, ttl: record.TTL, data }
 	})
 
 	return records
