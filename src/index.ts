@@ -1,6 +1,8 @@
 import { toASCII } from 'punycode'
-import { dnsRecordsCloudflare, dnsRecordsGoogle, dnsRecordsNodeDig, dnsRecordsNodeDns } from './dns-resolvers.js'
+
+import { getDnsRecords } from './get-dns-records.js'
 import { subdomainsRecords } from './subdomains.js'
+import { isDomain } from './utils.js'
 
 /** DNS Record object, with type, ttl and value */
 export interface DnsRecord {
@@ -12,89 +14,6 @@ export interface DnsRecord {
 	ttl: number
 	/** Record data: IP for A or AAAA, fqdn for CNAME, etc */
 	data: string
-}
-
-const isTld = (tld: string): boolean => {
-	if (tld.startsWith('.')) {
-		tld = tld.substring(1)
-	}
-
-	return /^([a-z]{2,64}|xn[a-z0-9-]{5,})$/i.test(toASCII(tld))
-}
-
-/**
- * Basic check to test if a string is a valid domain name.
- * 
- * @param domain Fully qualified domain name.
- * @returns True if the string is a valid format for a domain name
- */
-const isDomain = (domain: string): boolean => {
-	if (domain.endsWith('.')) {
-		domain = domain.substring(0, domain.length - 1)
-	}
-
-	const labels = toASCII(domain).split('.').reverse()
-	const labelTest = /^([a-z0-9-_]{1,64}|xn[a-z0-9-]{5,})$/i
-
-	return labels.length > 1 && labels.every((label, index) => {
-		return index ? !label.startsWith('-') && !label.endsWith('-') && labelTest.test(label) : isTld(label)
-	})
-}
-
-function bestDnsResolverForThisRuntime(): string {
-	if (globalThis.process?.release?.name === 'node') {
-		return 'node-dns'
-	} else if (globalThis.navigator?.userAgent === 'Cloudflare-Workers') {
-		return 'cloudflare-dns'
-	} else {
-		return 'google-dns'
-	}
-}
-
-/**
- * Get DNS records of a given type for a FQDN.
- * 
- * @param name Fully qualified domain name.
- * @param type DNS record type: A, AAAA, TXT, CNAME, MX, etc.
- * @param resolver Which DNS resolver to use. If not specified, the best DNS resolver for this runtime will be used.
- * @returns Array of discovered `DnsRecord` objects.
- * 
- * @example Get TXT records for example.com
- * ```js
- * import { getDnsRecords } from '@layered/dns-records'
- * 
- * const txtRecords = await getDnsRecords('example.com', 'TXT')
- * ```
- * 
- * @example Get MX records for android.com from Google DNS resolver
- * ```js
- * import { getDnsRecords } from '@layered/dns-records'
- * 
- * const mxRecords = await getDnsRecords('android.com', 'MX', 'google-dns')
- * ```
- */
-export async function getDnsRecords(name: string, type: string = 'A', resolver?: string): Promise<DnsRecord[]> {
-	if (!isDomain(name)) {
-		throw new Error(`"${name}" is not a valid domain name`)
-	}
-
-	if (!resolver) {
-		resolver = bestDnsResolverForThisRuntime()
-	}
-
-	if (resolver === 'cloudflare-dns') {
-		return dnsRecordsCloudflare(name, type)
-	} else if (resolver === 'google-dns') {
-		return dnsRecordsGoogle(name, type)
-	} else if (resolver === 'node-dig') {
-		return dnsRecordsNodeDig(name, type)
-	} else if (resolver === 'node-dns') {
-		return dnsRecordsNodeDns(name, type)
-	} else if (resolver === 'deno-dns') {
-		throw new Error('Deno DNS not yet implemented')
-	}
-
-	throw new Error(`Invalid DNS resolver: ${resolver}`)
 }
 
 /** Options for discovering DNS records. */
