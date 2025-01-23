@@ -23,9 +23,6 @@ export function isDomain(domain: string): boolean {
 	const labelTest = /^([a-z0-9-_]{1,64}|xn[a-z0-9-]{5,})$/i
 
 	return labels.length > 1 && labels.every((label, index) => {
-
-		console.log(index, label, index ? !label.startsWith('-') && !label.endsWith('-') && labelTest.test(label) : isTld(label))
-
 		return index ? !label.startsWith('-') && !label.endsWith('-') && labelTest.test(label) : isTld(label)
 	})
 }

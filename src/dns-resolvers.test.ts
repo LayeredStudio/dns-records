@@ -2,7 +2,7 @@ import { strict as assert } from 'node:assert'
 import { test, suite } from 'node:test'
 import { isIPv4, isIPv6 } from 'node:net'
 
-import { dnsRecordsCloudflare, dnsRecordsGoogle, dnsRecordsNodeDns } from '../src/dns-resolvers.ts'
+import { dnsRecordsCloudflare, dnsRecordsGoogle, dnsRecordsNodeDns } from './dns-resolvers.js'
 
 suite('Cloudflare DNS resolver', () => {
 	test('NS records', async () => {
