@@ -1,4 +1,5 @@
 import { toASCII } from 'punycode';
+import {} from './index.js';
 const dnsTypeNumbers = {
     1: 'A',
     2: 'NS',
@@ -13,8 +14,17 @@ const dnsTypeNumbers = {
     33: 'SRV',
     257: 'CAA',
 };
+function prepareDnsRecord(record) {
+    if (record.name.endsWith('.')) {
+        record.name = record.name.slice(0, -1);
+    }
+    if (['CNAME', 'NS'].includes(record.type) && record.data.endsWith('.')) {
+        record.data = record.data.slice(0, -1);
+    }
+    return record;
+}
 export async function dnsRecordsCloudflare(name, type = 'A') {
-    const re = await fetch(`https://cloudflare-dns.com/dns-query?name=${toASCII(name)}&type=${type}&cd=1`, {
+    const re = await fetch(`https://cloudflare-dns.com/dns-query?name=${toASCII(name)}&type=${type}`, {
         headers: {
             accept: 'application/dns-json',
         }
@@ -23,34 +33,25 @@ export async function dnsRecordsCloudflare(name, type = 'A') {
         throw new Error(`Error fetching DNS records for ${name}: ${re.status} ${re.statusText}`);
     }
     const json = await re.json();
-    const records = (json.Answer || []).map((record) => {
+    const records = (json.Answer || json.Authority || []).map((record) => {
         const type = dnsTypeNumbers[record.type] || String(record.type);
-        let data = record.data;
-        if (['CNAME', 'NS'].includes(type) && data.endsWith('.')) {
-            data = data.slice(0, -1);
-        }
-        return { name: record.name, type, ttl: record.TTL, data };
+        return prepareDnsRecord({ name: record.name, type, ttl: record.TTL, data: record.data });
     });
     return records;
 }
 export async function dnsRecordsGoogle(name, type = 'A') {
-    const re = await fetch(`https://dns.google/resolve?name=${toASCII(name)}&type=${type}&cd=1`);
+    const re = await fetch(`https://dns.google/resolve?name=${toASCII(name)}&type=${type}`);
     if (!re.ok) {
         throw new Error(`Error fetching DNS records for ${name}: ${re.status} ${re.statusText}`);
     }
     const json = await re.json();
-    const records = (json.Answer || []).map((record) => {
-        const type = dnsTypeNumbers[record.type] || String(record.type);
-        let data = record.data;
-        if (['CNAME', 'NS'].includes(type) && data.endsWith('.')) {
-            data = data.slice(0, -1);
-        }
-        return {
+    const records = (json.Answer || json.Authority || []).map((record) => {
+        return prepareDnsRecord({
             name: record.name,
-            type,
+            type: dnsTypeNumbers[record.type] || String(record.type),
             ttl: record.TTL,
-            data,
-        };
+            data: record.data,
+        });
     });
     return records;
 }
@@ -103,16 +104,12 @@ export async function dnsRecordsNodeDig(names, types = 'A', server) {
         .forEach(line => {
         // replace tab(s) with space, then split by space
         const parts = line.replace(/[\t]+/g, " ").split(" ");
-        let name = String(parts[0]);
-        const type = String(parts[3]);
-        let data = parts.slice(4).join(" ");
-        if (name.endsWith('.')) {
-            name = name.slice(0, -1);
-        }
-        if (['CNAME', 'NS'].includes(type) && data.endsWith('.')) {
-            data = data.slice(0, -1);
-        }
-        dnsRecords.push({ name, ttl: Number(parts[1]), type, data });
+        dnsRecords.push(prepareDnsRecord({
+            name: String(parts[0]),
+            ttl: Number(parts[1]),
+            type: String(parts[3]),
+            data: parts.slice(4).join(" "),
+        }));
     });
     return dnsRecords;
 }

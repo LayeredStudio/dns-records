@@ -1,4 +1,4 @@
-// A, AAAA, CNAME records
+// Common A, AAAA, CNAME records
 export const subdomainsRecords = [
     'admin',
     'analytics',
@@ -35,7 +35,7 @@ export const subdomainsRecords = [
     'www',
     'webmail',
 ];
-// common found TXT records
+// Common TXT records
 export const txtRecords = [
     '_amazonses',
     '_dmarc',

@@ -1,4 +1,4 @@
-import { DnsRecord } from './index.js';
+import { type DnsRecord } from './index.js';
 export declare function dnsRecordsCloudflare(name: string, type?: string): Promise<DnsRecord[]>;
 export declare function dnsRecordsGoogle(name: string, type?: string): Promise<DnsRecord[]>;
 /**
