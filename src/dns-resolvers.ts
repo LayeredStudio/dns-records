@@ -1,5 +1,5 @@
 import { toASCII } from 'punycode'
-import { DnsRecord } from './index.js'
+import { type DnsRecord } from './index.js'
 
 const dnsTypeNumbers: { [key: number]: string } = {
 	1: 'A',
