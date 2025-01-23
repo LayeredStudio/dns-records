@@ -25,14 +25,14 @@
   "sideEffects": false,
   "scripts": {
     "build": "tsc",
-    "dev": "node --enable-source-maps --import tsx/esm --watch src/index.ts",
+    "dev": "node --enable-source-maps --trace-deprecation --import tsx/esm --watch src/index.ts",
     "test": "node --test --import tsx/esm test/**/*.ts"
   },
   "dependencies": {
     "punycode": "^2.1.1"
   },
   "devDependencies": {
-    "@types/node": "^20.10.6",
+    "@types/node": "^22.10.8",
     "tsx": "^4.7.0",
     "typescript": "^5.3.3"
   }
