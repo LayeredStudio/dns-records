@@ -1,6 +1,6 @@
 {
   "name": "@layered/dns-records",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Discover publicly available DNS Records for a domain",
   "type": "module",
   "keywords": [

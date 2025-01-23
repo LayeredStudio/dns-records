@@ -11,7 +11,7 @@
     "noImplicitReturns": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noUncheckedIndexedAccess": true,
+    //"noUncheckedIndexedAccess": true,
     "noPropertyAccessFromIndexSignature": true,
     "verbatimModuleSyntax": true
   },

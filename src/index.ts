@@ -33,11 +33,11 @@ export type GetAllDnsRecordsOptions = {
  * @param options Options for DNS resolver, extra subdomains to check, etc.
  * @returns ReadableStream of DNS records.
  */
-export function getAllDnsRecordsStream(domain: string, options: Partial<GetAllDnsRecordsOptions> = {}): ReadableStream {
+export function getAllDnsRecordsStream(domain: string, options?: GetAllDnsRecordsOptions): ReadableStream {
 	options = {
 		subdomains: [],
 		commonSubdomainsCheck: true,
-		...options,
+		...(options || {}),
 	}
 
 	if (!isDomain(domain)) {
@@ -194,7 +194,7 @@ export function getAllDnsRecordsStream(domain: string, options: Partial<GetAllDn
  * })
  * ```
  */
-export async function getAllDnsRecords(domain: string, options: Partial<GetAllDnsRecordsOptions> = {}): Promise<DnsRecord[]> {
+export async function getAllDnsRecords(domain: string, options?: GetAllDnsRecordsOptions): Promise<DnsRecord[]> {
 	const records: DnsRecord[] = []
 	const dnsRecordsStream = getAllDnsRecordsStream(domain, options)
 
