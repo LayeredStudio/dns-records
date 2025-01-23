@@ -1,4 +1,4 @@
-import { DnsRecord, getDnsRecords } from '../src/index.ts'
+import { type DnsRecord, getDnsRecords } from '../src/index.ts'
 
 const domain = 'apple.com'
 

@@ -2,14 +2,13 @@
 
 **@layered/dns-records** is a DNS helper library than can quickly discover and retrieve all DNS records for a domain.
 
-* Retrieves DNS records for a domain
-* Discovers (almost) all A, AAAA, CNAME, and TXT for a domain
+* Retrieves DNS records for any domain name
+* Discovers (almost) all A, AAAA, CNAME, and TXT for a domain, with option to specify extra subdomains
 * Detects wildcard `*` records
-* Option to specify extra subdomains to check for
 * Provides results in common format, see `DnsRecord`
 * Works in all JavaScript runtimes: Browsers, Node.js, CloudFlare Workers, Deno, Bun, etc
 
-→ See it in action here https://dmns.app
+→ See it in action here https://dmns.app ・ https://chromewebstore.google.com/detail/domain-info/afbepfhknfficaflckmgflbmklcleidl
 
 
 ## Getting Started
@@ -47,7 +46,7 @@ Here is the list of supported DNS resolvers:
 ## Client API
 - [`getDnsRecords(hostname: string, type: string = 'A', resolver?)`](#dns-records-by-type) - Get DNS records for a hostname
 - [`getAllDnsRecords(domain: string, options: GetAllDnsRecordsOptions)`](#all-dns-records) - Get all DNS records for a domain
-- [`getAllDnsRecordsStream(domain: string, options): ReadableStream`](#all-dns-records-stream)
+- [`getAllDnsRecordsStream(domain: string, options): ReadableStream`](#all-dns-records-stream) - Get all DNS records for a domain, streaming them as they're discovered
 
 #### DNS Records by type
 
@@ -57,7 +56,7 @@ Here is the list of supported DNS resolvers:
 |-----|---|---|---|
 |name |string|   |hostname. Ex: `'x.com'` or `email.apple.com`|
 |type |string|`A`|record type: Ex: `'TXT'`, `'MX'`, `'CNAME'`|
-|resolver |string|   |DNS resolver to use, see resolvers above. If not set, the best match for current runtime will be used|
+|resolver |string|best for current runtime|DNS resolver to use, see resolvers above|
 
 ```js
 import { getDnsRecords } from '@layered/dns-records'
@@ -95,6 +94,7 @@ import { getAllDnsRecords } from '@layered/dns-records'
 const allRecords = await getAllDnsRecords('x.com', {
   resolver: 'cloudflare-dns',
   commonSubdomainsCheck: true,
+  subdomains: ['extra-subdomain-to-check-for'],
 })
 console.log('DNS all records', allRecords)
 ```
