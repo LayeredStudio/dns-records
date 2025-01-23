@@ -1,5 +1,6 @@
 {
   "name": "@layered/dns-records",
-  "version": "2.1.0",
+  "license": "MIT",
+  "version": "2.2.1",
   "exports": "./src/index.ts"
 }
