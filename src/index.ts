@@ -286,3 +286,5 @@ export function detectWildcardRecords(domain: string, records: DnsRecord[], perc
 
 	return recordsWithWildcard
 }
+
+export { getDnsRecords }
