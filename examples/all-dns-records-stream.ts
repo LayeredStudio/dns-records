@@ -1,4 +1,4 @@
-import { DnsRecord, getAllDnsRecordsStream, parseDnsRecord } from '../src/index.ts'
+import { type DnsRecord, getAllDnsRecordsStream, parseDnsRecord } from '../src/index.ts'
 
 // get the DNS Records stream. Notice await is not needed
 const dnsRecordsStream = getAllDnsRecordsStream('shopify.com')
@@ -12,6 +12,6 @@ for await (const record of dnsRecordsStream) {
 	console.log('DNS line', dnsRecordLine)
 
 	// parse the DNS record line to a DnsRecord object
-	const dnsRecord = parseDnsRecord(dnsRecordLine)
+	const dnsRecord: DnsRecord = parseDnsRecord(dnsRecordLine)
 	//console.log('DNS object', dnsRecord)
 }
