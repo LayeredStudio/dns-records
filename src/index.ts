@@ -50,8 +50,8 @@ export function getAllDnsRecordsStream(domain: string, options?: GetAllDnsRecord
 	const { readable, writable } = new TransformStream();
 	const writer = writable.getWriter();
 
-	// found records
-	const recordsHashes: String[] = []
+	// List of unique records sent, to avoid duplicates
+	const recordsHashes: Set<String> = new Set()
 
 	// records that can expose subdomains
 	const subdomainsChecked: String[] = []
@@ -66,8 +66,8 @@ export function getAllDnsRecordsStream(domain: string, options?: GetAllDnsRecord
 	const sendRecord = (record: DnsRecord) => {
 		const hash = `${record.name}-${record.type}-${record.data}`
 
-		if (!recordsHashes.includes(hash) && record.name.endsWith(domain)) {
-			recordsHashes.push(hash)
+		if (!recordsHashes.has(hash) && record.name.endsWith(domain)) {
+			recordsHashes.add(hash)
 			writer.write(encoder.encode([ record.name, record.ttl, 'IN', record.type, record.data ].join('\t')));
 		}
 	}
