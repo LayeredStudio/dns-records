@@ -27,8 +27,15 @@ function prepareDnsRecord(record: DnsRecord): DnsRecord {
 	return record
 }
 
-export async function dnsRecordsCloudflare(name: string, type: string = 'A'): Promise<DnsRecord[]> {
-	const re = await fetch(`https://cloudflare-dns.com/dns-query?name=${name}&type=${type}`, {
+export async function dnsRecordsCloudflare(name: string, type?: string): Promise<DnsRecord[]> {
+	const cloudflareDnsUrl = new URL('https://cloudflare-dns.com/dns-query')
+	cloudflareDnsUrl.searchParams.set('name', name)
+
+	if (type) {
+		cloudflareDnsUrl.searchParams.set('type', type)
+	}
+
+	const re = await fetch(cloudflareDnsUrl, {
 		headers: {
 			accept: 'application/dns-json',
 		}
@@ -48,8 +55,15 @@ export async function dnsRecordsCloudflare(name: string, type: string = 'A'): Pr
 	return records
 }
 
-export async function dnsRecordsGoogle(name: string, type: string = 'A'): Promise<DnsRecord[]> {
-	const re = await fetch(`https://dns.google/resolve?name=${name}&type=${type}`)
+export async function dnsRecordsGoogle(name: string, type?: string): Promise<DnsRecord[]> {
+	const googleDnsUrl = new URL('https://dns.google/resolve')
+	googleDnsUrl.searchParams.set('name', name)
+
+	if (type) {
+		googleDnsUrl.searchParams.set('type', type)
+	}
+
+	const re = await fetch(googleDnsUrl)
 
 	if (!re.ok) {
 		throw new Error(`Error fetching DNS records for ${name}: ${re.status} ${re.statusText}`)
@@ -76,7 +90,7 @@ export async function dnsRecordsGoogle(name: string, type: string = 'A'): Promis
  * @param server The DNS server to query. If not provided, the default DNS server on the network will be used
  * @returns The DNS records
  */
-export async function dnsRecordsNodeDig(names: string | string[], types: string | string[] = 'A', server?: string): Promise<DnsRecord[]> {
+export async function dnsRecordsNodeDig(names: string | string[], types?: string | string[], server?: string): Promise<DnsRecord[]> {
 	// start building the arguments list for the `dig` command
 	const args = []
 
@@ -94,11 +108,11 @@ export async function dnsRecordsNodeDig(names: string | string[], types: string 
 	}
 
 	names.forEach(name => {
-		if (Array.isArray(types) && types.length) {
+		if (Array.isArray(types)) {
 			types.forEach(type => {
 				args.push(name, type)
 			})
-		} else if (types && typeof types === 'string') {
+		} else if (typeof types === 'string') {
 			args.push(name, types)
 		} else {
 			args.push(name)
@@ -142,34 +156,37 @@ export async function dnsRecordsNodeDig(names: string | string[], types: string 
  * @param types The DNS type to query
  * @returns The DNS records
  */
-export async function dnsRecordsNodeDns(name: string, type: string = 'A'): Promise<DnsRecord[]> {
+export async function dnsRecordsNodeDns(name: string, type?: string): Promise<DnsRecord[]> {
 	const { promises: dns } = await import('node:dns')
-	type = type.toUpperCase()
+
+	if (type) {
+		type = type.toUpperCase()
+	}
 
 	const dnsRecords: DnsRecord[] = []
 
 	try {
-		if (['A', 'AAAA'].includes(type)) {
+		if (!type) {
+			const foundRecords = await dns.resolveAny(name)
+
+			foundRecords.forEach(record => {
+				if (record.type === 'A') {
+					dnsRecords.push({ name, type: record.type, ttl: record.ttl, data: record.address })
+				} else if (record.type === 'CNAME') {
+					dnsRecords.push({ name, type: record.type, ttl: 0, data: record.value })
+				}
+			})
+		} else if (['A', 'AAAA'].includes(type)) {
 			const foundRecords = type === 'A' ? await dns.resolve4(name, { ttl: true }) : await dns.resolve6(name, { ttl: true })
 
 			foundRecords.forEach(record => {
-				dnsRecords.push({
-					name,
-					type,
-					ttl: record.ttl,
-					data: record.address,
-				})
+				dnsRecords.push({ name, type, ttl: record.ttl, data: record.address })
 			})
 		} else if (type === 'CNAME') {
 			const foundRecords = await dns.resolveCname(name)
 
 			foundRecords.forEach(record => {
-				dnsRecords.push({
-					name,
-					type,
-					ttl: 0,
-					data: record,
-				})
+				dnsRecords.push({ name, type, ttl: 0, data: record })
 			})
 		} else if (type === 'MX') {
 			const foundRecords = await dns.resolveMx(name)
@@ -186,12 +203,7 @@ export async function dnsRecordsNodeDns(name: string, type: string = 'A'): Promi
 			const foundRecords = await dns.resolveNs(name)
 
 			foundRecords.forEach(record => {
-				dnsRecords.push({
-					name,
-					type,
-					ttl: 0,
-					data: record,
-				})
+				dnsRecords.push({ name, type, ttl: 0, data: record })
 			})
 		} else if (type === 'SOA') {
 			const foundRecords = await dns.resolveSoa(name)
@@ -206,12 +218,34 @@ export async function dnsRecordsNodeDns(name: string, type: string = 'A'): Promi
 			const foundRecords = await dns.resolveTxt(name)
 
 			foundRecords.forEach(record => {
-				dnsRecords.push({
-					name,
-					type,
-					ttl: 0,
-					data: record.join(' '),
-				})
+				dnsRecords.push({ name, type, ttl: 0, data: record.join(' ') })
+			})
+		} else if (type === 'CAA') {
+			const foundRecords = await dns.resolveCaa(name)
+
+			foundRecords.forEach(record => {
+				let data: string | undefined
+
+				if (record.contactemail) {
+					data = `contactemail "${record.contactemail}"`
+				} else if (record.contactphone) {
+					data = `contactphone "${record.contactphone}"`
+				} else if (record.iodef) {
+					data = `iodef "${record.iodef}"`
+				} else if (record.issue) {
+					data = `issue "${record.issue}"`
+				} else if (record.issuewild) {
+					data = `issuewild "${record.issuewild}"`
+				}
+
+				if (data) {
+					dnsRecords.push({
+						name,
+						type,
+						ttl: 0,
+						data: `${record.critical} ${data}`,
+					})
+				}
 			})
 		}
 	} catch (e) {}
