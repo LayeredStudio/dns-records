@@ -1,6 +1,6 @@
 {
   "name": "@layered/dns-records",
-  "version": "2.2.2",
+  "version": "2.3.0",
   "description": "Discover publicly available DNS Records for a domain",
   "type": "module",
   "keywords": [
@@ -20,7 +20,8 @@
   "exports": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "examples"
   ],
   "sideEffects": false,
   "scripts": {
