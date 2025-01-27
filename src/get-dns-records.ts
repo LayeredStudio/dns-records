@@ -1,6 +1,6 @@
 import { dnsRecordsCloudflare, dnsRecordsGoogle, dnsRecordsNodeDig, dnsRecordsNodeDns } from './dns-resolvers.js'
 import { type DnsRecord } from './index.js'
-import { isDomain } from './utils.js'
+import { validatedDomain } from './utils.js'
 
 function bestDnsResolverForThisRuntime(): string {
 	if (globalThis.process?.release?.name === 'node') {
@@ -15,7 +15,7 @@ function bestDnsResolverForThisRuntime(): string {
 /**
  * Get DNS records of a given type for a FQDN.
  * 
- * @param name Fully qualified domain name.
+ * @param name Fully qualified domain name, like example.com or mail.google.com (no protocol or path)
  * @param type DNS record type: A, AAAA, TXT, CNAME, MX, etc.
  * @param resolver Which DNS resolver to use. If not specified, the best DNS resolver for this runtime will be used.
  * @returns Array of discovered `DnsRecord` objects.
@@ -35,9 +35,7 @@ function bestDnsResolverForThisRuntime(): string {
  * ```
  */
 export async function getDnsRecords(name: string, type: string = 'A', resolver?: string): Promise<DnsRecord[]> {
-	if (!isDomain(name)) {
-		throw new Error(`"${name}" is not a valid domain name`)
-	}
+	name = validatedDomain(name)
 
 	if (!resolver) {
 		resolver = bestDnsResolverForThisRuntime()

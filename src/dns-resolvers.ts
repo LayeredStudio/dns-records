@@ -1,4 +1,3 @@
-import { toASCII } from 'punycode'
 import { type DnsRecord } from './index.js'
 
 const dnsTypeNumbers: { [key: number]: string } = {
@@ -29,7 +28,7 @@ function prepareDnsRecord(record: DnsRecord): DnsRecord {
 }
 
 export async function dnsRecordsCloudflare(name: string, type: string = 'A'): Promise<DnsRecord[]> {
-	const re = await fetch(`https://cloudflare-dns.com/dns-query?name=${toASCII(name)}&type=${type}`, {
+	const re = await fetch(`https://cloudflare-dns.com/dns-query?name=${name}&type=${type}`, {
 		headers: {
 			accept: 'application/dns-json',
 		}
@@ -50,7 +49,7 @@ export async function dnsRecordsCloudflare(name: string, type: string = 'A'): Pr
 }
 
 export async function dnsRecordsGoogle(name: string, type: string = 'A'): Promise<DnsRecord[]> {
-	const re = await fetch(`https://dns.google/resolve?name=${toASCII(name)}&type=${type}`)
+	const re = await fetch(`https://dns.google/resolve?name=${name}&type=${type}`)
 
 	if (!re.ok) {
 		throw new Error(`Error fetching DNS records for ${name}: ${re.status} ${re.statusText}`)
@@ -95,8 +94,6 @@ export async function dnsRecordsNodeDig(names: string | string[], types: string 
 	}
 
 	names.forEach(name => {
-		name = toASCII(name)
-
 		if (Array.isArray(types) && types.length) {
 			types.forEach(type => {
 				args.push(name, type)

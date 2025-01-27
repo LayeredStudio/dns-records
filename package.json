@@ -28,9 +28,6 @@
     "dev": "node --enable-source-maps --trace-deprecation --import tsx/esm --watch src/index.ts",
     "test": "node --test --import tsx/esm src/*.test.ts"
   },
-  "dependencies": {
-    "punycode": "^2.1.1"
-  },
   "devDependencies": {
     "@types/node": "^22.10.8",
     "tsx": "^4.7.0",

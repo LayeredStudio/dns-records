@@ -1,8 +1,6 @@
-import { toASCII } from 'punycode'
-
 import { getDnsRecords } from './get-dns-records.js'
 import { subdomainsRecords } from './subdomains.js'
-import { isDomain } from './utils.js'
+import { validatedDomain } from './utils.js'
 
 /** DNS Record object, with type, ttl and value */
 export interface DnsRecord {
@@ -29,7 +27,7 @@ export type GetAllDnsRecordsOptions = {
 /**
  * Discover all DNS records for a domain name and stream each record as a text line.
  * 
- * @param domain Valid domain name.
+ * @param domain Valid domain name, without subdomain or protocol.
  * @param options Options for DNS resolver, extra subdomains to check, etc.
  * @returns ReadableStream of DNS records.
  */
@@ -40,11 +38,7 @@ export function getAllDnsRecordsStream(domain: string, options?: GetAllDnsRecord
 		...(options || {}),
 	}
 
-	if (!isDomain(domain)) {
-		throw new Error(`"${domain}" is not a valid domain name`)
-	}
-
-	domain = toASCII(domain)
+	domain = validatedDomain(domain)
 
 	const encoder = new TextEncoder();
 	const { readable, writable } = new TransformStream();
