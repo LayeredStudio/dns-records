@@ -2,7 +2,7 @@ import { strict as assert } from 'node:assert'
 import { test, suite } from 'node:test'
 import { isIPv4, isIPv6 } from 'node:net'
 
-import { dnsRecordsCloudflare, dnsRecordsGoogle, dnsRecordsNodeDns } from './dns-resolvers.js'
+import { dnsRecordsCloudflare, dnsRecordsGoogle, dnsRecordsNodeDig, dnsRecordsNodeDns } from './dns-resolvers.js'
 
 suite('Cloudflare DNS resolver', () => {
 	test('NS records', async () => {
@@ -131,62 +131,120 @@ suite('Google DNS resolver', () => {
 
 suite('Node DNS resolver', () => {
 	test('NS records', async () => {
-		const nsRecords = await dnsRecordsNodeDns('nodejs.org', 'NS')
+		const nsRecords = await dnsRecordsNodeDns('domains-api.com', 'NS')
 
-		assert.notEqual(nsRecords.length, 0)
-		assert.equal(nsRecords[0].name, 'nodejs.org')
+		assert.equal(nsRecords.length, 2)
+		assert.equal(nsRecords[0].name, 'domains-api.com')
 		assert.equal(nsRecords[0].type, 'NS')
 		assert.ok(Number.isSafeInteger(nsRecords[0].ttl))
-		assert.ok(nsRecords[0].data.length)
+
+		// Check if the NS records are the expected ones
+		const expectedNsRecords = ['nitin.ns.cloudflare.com', 'robin.ns.cloudflare.com']
+		assert.ok(expectedNsRecords.includes(nsRecords[0].data))
+		assert.ok(expectedNsRecords.includes(nsRecords[1].data))
 	})
 
 	test('A records', async () => {
-		const aRecords = await dnsRecordsNodeDns('nodejs.org', 'A')
+		const aRecords = await dnsRecordsNodeDns('domains-api.com', 'A')
 
 		assert.notEqual(aRecords.length, 0)
-		assert.equal(aRecords[0].name, 'nodejs.org')
+		assert.equal(aRecords[0].name, 'domains-api.com')
 		assert.equal(aRecords[0].type, 'A')
 		assert.ok(Number.isSafeInteger(aRecords[0].ttl))
 		assert.ok(isIPv4(aRecords[0].data))
 	})
 
 	test('AAAA records', async () => {
-		const aaaaRecords = await dnsRecordsNodeDns('nodejs.org', 'AAAA')
+		const aaaaRecords = await dnsRecordsNodeDns('domains-api.com', 'AAAA')
 
 		assert.notEqual(aaaaRecords.length, 0)
-		assert.equal(aaaaRecords[0].name, 'nodejs.org')
+		assert.equal(aaaaRecords[0].name, 'domains-api.com')
 		assert.equal(aaaaRecords[0].type, 'AAAA')
 		assert.ok(Number.isSafeInteger(aaaaRecords[0].ttl))
 		assert.ok(isIPv6(aaaaRecords[0].data))
 	})
 
 	test('TXT records', async () => {
-		const txtRecords = await dnsRecordsNodeDns('nodejs.org', 'TXT')
+		const txtRecords = await dnsRecordsNodeDns('domains-api.com', 'TXT')
 
 		assert.notEqual(txtRecords.length, 0)
-		assert.equal(txtRecords[0].name, 'nodejs.org')
+		assert.equal(txtRecords[0].name, 'domains-api.com')
 		assert.equal(txtRecords[0].type, 'TXT')
 		assert.ok(Number.isSafeInteger(txtRecords[0].ttl))
-		assert.ok(txtRecords[0].data)
-	})
 
-	test('CAA records', async () => {
-		const caaRecords = await dnsRecordsNodeDns('npmjs.com', 'CAA')
-
-		assert.notEqual(caaRecords.length, 0)
-		assert.equal(caaRecords[0].name, 'npmjs.com')
-		assert.equal(caaRecords[0].type, 'CAA')
-		assert.ok(Number.isSafeInteger(caaRecords[0].ttl))
-		assert.ok(caaRecords[0].data)
+		const testTxtRecord = txtRecords.find(record => record.data.includes('test-value'))
+		assert.ok(testTxtRecord)
 	})
 
 	test('ANY records', async () => {
-		const anyRecords = await dnsRecordsNodeDns('docs.npmjs.com')
+		const anyRecords = await dnsRecordsNodeDns('name-test.domains-api.com')
 
 		assert.notEqual(anyRecords.length, 0)
-		assert.equal(anyRecords[0].name, 'docs.npmjs.com')
+		assert.equal(anyRecords[0].name, 'name-test.domains-api.com')
 		assert.equal(anyRecords[0].type, 'CNAME')
 		assert.ok(Number.isSafeInteger(anyRecords[0].ttl))
-		assert.equal(anyRecords[0].data, 'npm.github.io')
+		assert.equal(anyRecords[0].data, 'dmns.app')
+	})
+})
+
+suite('`$ dig` resolver', () => {
+	test('NS records', async () => {
+		const nsRecords = await dnsRecordsNodeDig('dmns.app', 'NS')
+
+		const expectedNsRecords = ['nitin.ns.cloudflare.com', 'robin.ns.cloudflare.com']
+
+		assert.equal(nsRecords.length, 2)
+		assert.equal(nsRecords[0].name, 'dmns.app')
+		assert.equal(nsRecords[0].type, 'NS')
+		assert.ok(Number.isSafeInteger(nsRecords[0].ttl))
+		assert.ok(expectedNsRecords.includes(nsRecords[0].data))
+		assert.ok(expectedNsRecords.includes(nsRecords[1].data))
+	})
+
+	test('A records', async () => {
+		const aRecords = await dnsRecordsNodeDig('dmns.app', 'A')
+
+		assert.notEqual(aRecords.length, 0)
+		assert.equal(aRecords[0].name, 'dmns.app')
+		assert.equal(aRecords[0].type, 'A')
+		assert.ok(Number.isSafeInteger(aRecords[0].ttl))
+		assert.ok(isIPv4(aRecords[0].data))
+	})
+
+	test('AAAA records', async () => {
+		const aaaaRecords = await dnsRecordsNodeDig('dmns.app', 'AAAA')
+
+		assert.notEqual(aaaaRecords.length, 0)
+		assert.equal(aaaaRecords[0].name, 'dmns.app')
+		assert.equal(aaaaRecords[0].type, 'AAAA')
+		assert.ok(Number.isSafeInteger(aaaaRecords[0].ttl))
+		assert.ok(isIPv6(aaaaRecords[0].data))
+	})
+
+	test('TXT records', async () => {
+		const txtRecords = await dnsRecordsNodeDig('dmns.app', 'TXT')
+
+		assert.notEqual(txtRecords.length, 0)
+		assert.equal(txtRecords[0].name, 'dmns.app')
+		assert.equal(txtRecords[0].type, 'TXT')
+		assert.ok(Number.isSafeInteger(txtRecords[0].ttl))
+		assert.ok(txtRecords[0].data)
+
+		const spfRecord = txtRecords.find(record => record.data.includes('v=spf1'))
+		assert.ok(spfRecord)
+	})
+
+	test('ANY records', async () => {
+		const anyRecords = await dnsRecordsNodeDig('pm-bounces.dmns.app')
+
+		assert.notEqual(anyRecords.length, 0)
+
+		// One of the records should be an CNAME record
+		const anyCnameRecord = anyRecords.find(record => record.type === 'CNAME')
+		assert.ok(anyCnameRecord)
+		assert.equal(anyCnameRecord.name, 'pm-bounces.dmns.app')
+		assert.equal(anyCnameRecord.type, 'CNAME')
+		assert.ok(Number.isSafeInteger(anyCnameRecord.ttl))
+		assert.equal(anyCnameRecord.data, 'pm.mtasv.net')
 	})
 })
