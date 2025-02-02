@@ -177,10 +177,10 @@ suite('Node DNS resolver', () => {
 	})
 
 	test('ANY records', async () => {
-		const anyRecords = await dnsRecordsNodeDns('name-test.domains-api.com')
+		const anyRecords = await dnsRecordsNodeDns('cname-test.domains-api.com')
 
 		assert.notEqual(anyRecords.length, 0)
-		assert.equal(anyRecords[0].name, 'name-test.domains-api.com')
+		assert.equal(anyRecords[0].name, 'cname-test.domains-api.com')
 		assert.equal(anyRecords[0].type, 'CNAME')
 		assert.ok(Number.isSafeInteger(anyRecords[0].ttl))
 		assert.equal(anyRecords[0].data, 'dmns.app')
