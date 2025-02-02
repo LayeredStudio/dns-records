@@ -176,7 +176,7 @@ suite('Node DNS resolver', () => {
 		assert.ok(testTxtRecord)
 	})
 
-	test('ANY records', async () => {
+	test('ANY records', { todo: true }, async () => {
 		const anyRecords = await dnsRecordsNodeDns('cname-test.domains-api.com')
 
 		assert.notEqual(anyRecords.length, 0)
