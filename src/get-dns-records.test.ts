@@ -50,6 +50,50 @@ suite('NS for google.com', async () => {
 	});
 })
 
+suite('A records for "apple.com"', async () => {
+	const [ aRecordsWithCloudflareDns, aRecordsWithGoogleDns, aRecordsWithNodeDns, aRecordsWithNodeDig ] = await Promise.all([
+		getDnsRecords('apple.com', 'A', 'cloudflare-dns'),
+		getDnsRecords('apple.com', 'A', 'google-dns'),
+		getDnsRecords('apple.com', 'A', 'node-dns'),
+		getDnsRecords('apple.com', 'A', 'node-dig'),
+	])
+
+	test('same number of A records from all resolvers', () => {
+		assert.notEqual(aRecordsWithCloudflareDns.length, 0)
+		assert.equal(aRecordsWithCloudflareDns.length, aRecordsWithGoogleDns.length)
+		assert.equal(aRecordsWithGoogleDns.length, aRecordsWithNodeDns.length)
+		assert.equal(aRecordsWithNodeDns.length, aRecordsWithNodeDig.length)
+	})
+
+	test('validate A records from `cloudflare-dns`', () => {
+		const aRecord = aRecordsWithCloudflareDns[0]
+		assert.equal(aRecord.name, 'apple.com')
+		assert.equal(aRecord.type, 'A')
+		assert.ok(isIPv4(aRecord.data))
+	});
+
+	test('validate A records from `google-dns`', () => {
+		const aRecord = aRecordsWithGoogleDns[0]
+		assert.equal(aRecord.name, 'apple.com')
+		assert.equal(aRecord.type, 'A')
+		assert.ok(isIPv4(aRecord.data))
+	});
+
+	test('validate A records from `node-dns`', () => {
+		const aRecord = aRecordsWithNodeDns[0]
+		assert.equal(aRecord.name, 'apple.com')
+		assert.equal(aRecord.type, 'A')
+		assert.ok(isIPv4(aRecord.data))
+	});
+
+	test('validate A records from `node-dig`', () => {
+		const aRecord = aRecordsWithNodeDig[0]
+		assert.equal(aRecord.name, 'apple.com')
+		assert.equal(aRecord.type, 'A')
+		assert.ok(isIPv4(aRecord.data))
+	});
+})
+
 suite('A records for "mañana.com" (IDN)', async () => {
 	const [ aRecordsWithCloudflareDns, aRecordsWithGoogleDns, aRecordsWithNodeDns, aRecordsWithNodeDig ] = await Promise.all([
 		getDnsRecords('mañana.com', 'A', 'cloudflare-dns'),
@@ -93,5 +137,59 @@ suite('TXT records for "cloudflare.com"', async () => {
 		assert.ok(txtRecordsWithGoogleDns.some(record => record.data.includes('v=spf1')))
 		assert.ok(txtRecordsWithNodeDns.some(record => record.data.includes('v=spf1')))
 		assert.ok(txtRecordsWithNodeDig.some(record => record.data.includes('v=spf1')))
+	})
+})
+
+suite('MX records for "gmail.com"', async () => {
+	const [ mxRecordsWithCloudflareDns, mxRecordsWithGoogleDns, mxRecordsWithNodeDns, mxRecordsWithNodeDig ] = await Promise.all([
+		getDnsRecords('gmail.com', 'MX', 'cloudflare-dns'),
+		getDnsRecords('gmail.com', 'MX', 'google-dns'),
+		getDnsRecords('gmail.com', 'MX', 'node-dns'),
+		getDnsRecords('gmail.com', 'MX', 'node-dig'),
+	])
+
+	test('validate number of records', () => {
+		assert.notEqual(mxRecordsWithCloudflareDns.length, 0)
+		assert.equal(mxRecordsWithCloudflareDns.length, mxRecordsWithGoogleDns.length, 'MX records count differs between `google-dns` and `cloudflare-dns`')
+		assert.equal(mxRecordsWithGoogleDns.length, mxRecordsWithNodeDns.length, 'MX records count  differs between `cloudflare-dns` and `node-dns`')
+		assert.equal(mxRecordsWithNodeDns.length, mxRecordsWithNodeDig.length)
+	})
+})
+
+suite('ANY records', async () => {
+	const [ anyRecordsWithCloudflareDns, anyRecordsWithGoogleDns, anyRecordsWithNodeDns, anyRecordsWithNodeDig ] = await Promise.all([
+		getDnsRecords('cname-test.domains-api.com', undefined, 'cloudflare-dns'),
+		getDnsRecords('cname-test.domains-api.com', undefined, 'google-dns'),
+		getDnsRecords('cname-test.domains-api.com', undefined, 'node-dns'),
+		getDnsRecords('cname-test.domains-api.com', undefined, 'node-dig'),
+	])
+
+	console.log('cloudflare-dns', anyRecordsWithCloudflareDns)
+	console.log('google-dns', anyRecordsWithGoogleDns)
+	console.log('node-dns', anyRecordsWithNodeDns)
+	console.log('node-dig', anyRecordsWithNodeDig)
+
+	test('cloudflare-dns finds the cname record', () => {
+		const cnameRecordsWithCloudflareDns = anyRecordsWithCloudflareDns.find(record => record.type === 'CNAME')
+		assert.ok(cnameRecordsWithCloudflareDns)
+		assert.equal(cnameRecordsWithCloudflareDns.data, 'dmns.app')
+	})
+
+	test('google-dns finds the cname record', () => {
+		const cnameRecordsWithGoogleDns = anyRecordsWithGoogleDns.find(record => record.type === 'CNAME')
+		assert.ok(cnameRecordsWithGoogleDns)
+		assert.equal(cnameRecordsWithGoogleDns.data, 'dmns.app')
+	})
+
+	test('node-dns finds the cname record', () => {
+		const cnameRecordsWithNodeDns = anyRecordsWithNodeDns.find(record => record.type === 'CNAME')
+		assert.ok(cnameRecordsWithNodeDns)
+		assert.equal(cnameRecordsWithNodeDns.data, 'dmns.app')
+	})
+
+	test('node-dig finds the cname record', () => {
+		const cnameRecordsWithNodeDig = anyRecordsWithNodeDig.find(record => record.type === 'CNAME')
+		assert.ok(cnameRecordsWithNodeDig)
+		assert.equal(cnameRecordsWithNodeDig.data, 'dmns.app')
 	})
 })

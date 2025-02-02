@@ -34,7 +34,7 @@ function bestDnsResolverForThisRuntime(): string {
  * const mxRecords = await getDnsRecords('android.com', 'MX', 'google-dns')
  * ```
  */
-export async function getDnsRecords(name: string, type: string = 'A', resolver?: string): Promise<DnsRecord[]> {
+export async function getDnsRecords(name: string, type?: string, resolver?: string): Promise<DnsRecord[]> {
 	name = validatedDomain(name)
 
 	if (!resolver) {
