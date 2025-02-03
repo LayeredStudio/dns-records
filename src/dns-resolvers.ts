@@ -169,7 +169,7 @@ export async function dnsRecordsNodeDns(name: string, type?: DnsRecordType): Pro
 			const foundRecords = await dns.resolveAny(name)
 
 			foundRecords.forEach(record => {
-				if (record.type === 'A') {
+				if (record.type === 'A' || record.type === 'AAAA') {
 					dnsRecords.push({ name, type: record.type, ttl: record.ttl, data: record.address })
 				} else if (record.type === 'CNAME') {
 					dnsRecords.push({ name, type: record.type, ttl: 0, data: record.value })
