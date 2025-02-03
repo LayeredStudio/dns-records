@@ -25,6 +25,8 @@ suite('validatedDomain()', () => {
 	})
 
 	test('valid domains', () => {
+		assert.equal(validatedDomain('x.com'), 'x.com')
+		assert.equal(validatedDomain('mx3.x.com'), 'mx3.x.com')
 		assert.equal(validatedDomain('google.com'), 'google.com')
 		assert.equal(validatedDomain('google.co.uk'), 'google.co.uk')
 		assert.equal(validatedDomain('EXAMPLE.NET'), 'example.net')

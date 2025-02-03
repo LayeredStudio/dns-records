@@ -166,6 +166,7 @@ export function getAllDnsRecordsStream(domain: string, options?: GetAllDnsRecord
 				sendRecords(records)
 			})
 		} else {
+			// if there's no NS records, we can't get any other records, so close the stream
 			writer.close()
 		}
 	})
