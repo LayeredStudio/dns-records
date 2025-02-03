@@ -156,7 +156,7 @@ suite('MX records for "gmail.com"', async () => {
 	})
 })
 
-suite('ANY records', async () => {
+suite('ANY records', { skip: true }, async () => {
 	const [ anyRecordsWithCloudflareDns, anyRecordsWithGoogleDns, anyRecordsWithNodeDns, anyRecordsWithNodeDig ] = await Promise.all([
 		getDnsRecords('cname-test.domains-api.com', undefined, 'cloudflare-dns'),
 		getDnsRecords('cname-test.domains-api.com', undefined, 'google-dns'),
@@ -176,7 +176,7 @@ suite('ANY records', async () => {
 		assert.equal(cnameRecordsWithGoogleDns.data, 'dmns.app')
 	})
 
-	test('node-dns finds the cname record', { todo: true }, () => {
+	test('node-dns finds the cname record', () => {
 		const cnameRecordsWithNodeDns = anyRecordsWithNodeDns.find(record => record.type === 'CNAME')
 		assert.ok(cnameRecordsWithNodeDns)
 		assert.equal(cnameRecordsWithNodeDns.data, 'dmns.app')

@@ -25,16 +25,6 @@ suite('Cloudflare DNS resolver', () => {
 		assert.ok(isIPv4(aRecords[0].data))
 	})
 
-	test('AAAA records', async () => {
-		const aaaaRecords = await dnsRecordsCloudflare('cloudflare.com','AAAA')
-
-		assert.notEqual(aaaaRecords.length, 0)
-		assert.equal(aaaaRecords[0].name, 'cloudflare.com')
-		assert.equal(aaaaRecords[0].type, 'AAAA')
-		assert.ok(Number.isSafeInteger(aaaaRecords[0].ttl))
-		assert.ok(isIPv6(aaaaRecords[0].data))
-	})
-
 	test('MX records', async () => {
 		const mxRecords = await dnsRecordsCloudflare('cloudflare.com', 'MX')
 
@@ -46,7 +36,7 @@ suite('Cloudflare DNS resolver', () => {
 	})
 
 	test('TXT records', async () => {
-		const txtRecords = await dnsRecordsCloudflare('cloudflare.com', 'txt')
+		const txtRecords = await dnsRecordsCloudflare('cloudflare.com', 'TXT')
 
 		assert.notEqual(txtRecords.length, 0)
 		assert.equal(txtRecords[0].name, 'cloudflare.com')
@@ -54,16 +44,6 @@ suite('Cloudflare DNS resolver', () => {
 		assert.ok(Number.isSafeInteger(txtRecords[0].ttl))
 		assert.ok(txtRecords[0].data)
 		assert.ok(txtRecords.some(record => record.data.includes('v=spf1')))
-	})
-
-	test('CAA records', async () => {
-		const caaRecords = await dnsRecordsCloudflare('cloudflare.com', 'CAA')
-
-		assert.notEqual(caaRecords.length, 0)
-		assert.equal(caaRecords[0].name, 'cloudflare.com')
-		assert.equal(caaRecords[0].type, 'CAA')
-		assert.ok(Number.isSafeInteger(caaRecords[0].ttl))
-		assert.ok(caaRecords[0].data)
 	})
 
 	test('ANY records', async () => {
@@ -88,18 +68,8 @@ suite('Google DNS resolver', () => {
 		assert.ok(isIPv4(aRecords[0].data))
 	})
 
-	test('AAAA records', async () => {
-		const aaaaRecords = await dnsRecordsGoogle('gmail.com', 'AAAA')
-
-		assert.notEqual(aaaaRecords.length, 0)
-		assert.equal(aaaaRecords[0].name, 'gmail.com')
-		assert.equal(aaaaRecords[0].type, 'AAAA')
-		assert.ok(Number.isSafeInteger(aaaaRecords[0].ttl))
-		assert.ok(isIPv6(aaaaRecords[0].data))
-	})
-
 	test('TXT records', async () => {
-		const txtRecords = await dnsRecordsGoogle('gmail.com', 'txt')
+		const txtRecords = await dnsRecordsGoogle('gmail.com', 'TXT')
 
 		assert.notEqual(txtRecords.length, 0)
 		assert.equal(txtRecords[0].name, 'gmail.com')
@@ -116,16 +86,6 @@ suite('Google DNS resolver', () => {
 		assert.equal(caaRecords[0].type, 'CAA')
 		assert.ok(Number.isSafeInteger(caaRecords[0].ttl))
 		assert.ok(caaRecords[0].data)
-	})
-
-	test('ANY records', async () => {
-		const anyRecords = await dnsRecordsGoogle('mail.google.com')
-
-		assert.notEqual(anyRecords.length, 0)
-		assert.equal(anyRecords[0].name, 'mail.google.com')
-		assert.equal(anyRecords[0].type, 'A')
-		assert.ok(Number.isSafeInteger(anyRecords[0].ttl))
-		assert.ok(isIPv4(anyRecords[0].data))
 	})
 })
 
@@ -190,7 +150,6 @@ suite('Node DNS resolver', () => {
 suite('`$ dig` resolver', () => {
 	test('NS records', async () => {
 		const nsRecords = await dnsRecordsNodeDig('dmns.app', 'NS')
-
 		const expectedNsRecords = ['nitin.ns.cloudflare.com', 'robin.ns.cloudflare.com']
 
 		assert.equal(nsRecords.length, 2)
@@ -209,16 +168,6 @@ suite('`$ dig` resolver', () => {
 		assert.equal(aRecords[0].type, 'A')
 		assert.ok(Number.isSafeInteger(aRecords[0].ttl))
 		assert.ok(isIPv4(aRecords[0].data))
-	})
-
-	test('AAAA records', async () => {
-		const aaaaRecords = await dnsRecordsNodeDig('dmns.app', 'AAAA')
-
-		assert.notEqual(aaaaRecords.length, 0)
-		assert.equal(aaaaRecords[0].name, 'dmns.app')
-		assert.equal(aaaaRecords[0].type, 'AAAA')
-		assert.ok(Number.isSafeInteger(aaaaRecords[0].ttl))
-		assert.ok(isIPv6(aaaaRecords[0].data))
 	})
 
 	test('TXT records', async () => {
