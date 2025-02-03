@@ -87,8 +87,13 @@ export function getAllDnsRecordsStream(domain: string, options?: GetAllDnsRecord
 
 				if (subdomain && !subdomainsChecked.has(subdomain)) {
 					runningChecks++
-					subdomainsChecked.push(subdomain)
-					getDnsRecords(`${subdomain}.${domain}`, 'A', options.resolver).then(sendRecords)
+					subdomainsChecked.add(subdomain)
+					getDnsRecords(`${subdomain}.${domain}`, undefined, options.resolver).then(records => {
+						sendRecords(records)
+
+						// check for extra subdomains in CNAME records
+						records.filter(record => record.type === 'CNAME').forEach(record => addSubdomain(record.data))
+					})
 				}
 			}
 
