@@ -51,7 +51,7 @@ export function getAllDnsRecordsStream(domain: string, options?: GetAllDnsRecord
 	const recordsHashes: Set<String> = new Set()
 
 	// records that can expose subdomains
-	const subdomainsChecked: String[] = []
+	const subdomainsChecked: Set<String> = new Set()
 	const subdomainsExtra: String[] = []
 	if (options.subdomains) {
 		subdomainsExtra.push(...options.subdomains)
@@ -85,7 +85,7 @@ export function getAllDnsRecordsStream(domain: string, options?: GetAllDnsRecord
 			while (subdomainsExtra.length) {
 				const subdomain = subdomainsExtra.shift()
 
-				if (subdomain && !subdomainsChecked.includes(subdomain)) {
+				if (subdomain && !subdomainsChecked.has(subdomain)) {
 					runningChecks++
 					subdomainsChecked.push(subdomain)
 					getDnsRecords(`${subdomain}.${domain}`, 'A', options.resolver).then(sendRecords)
@@ -105,7 +105,7 @@ export function getAllDnsRecordsStream(domain: string, options?: GetAllDnsRecord
 
 		if (value.endsWith(`.${domain}`)) {
 			const subdomain = value.replace(`.${domain}`, '')
-			if (!subdomainsExtra.includes(subdomain)) {
+			if (!subdomainsExtra.includes(subdomain) && !subdomainsChecked.has(subdomain)) {
 				subdomainsExtra.push(subdomain)
 			}
 		}
