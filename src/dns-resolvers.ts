@@ -1,4 +1,4 @@
-import { type DnsRecord } from './index.js'
+import { type DnsRecord, type DnsRecordType } from './index.js'
 
 const dnsTypeNumbers: { [key: number]: string } = {
 	1: 'A',
@@ -12,6 +12,9 @@ const dnsTypeNumbers: { [key: number]: string } = {
 	25: 'KEY',
 	28: 'AAAA',
 	33: 'SRV',
+	35: 'NAPTR',
+	43: 'DS',
+	48: 'DNSKEY',
 	257: 'CAA',
 }
 
@@ -27,7 +30,7 @@ function prepareDnsRecord(record: DnsRecord): DnsRecord {
 	return record
 }
 
-export async function dnsRecordsCloudflare(name: string, type?: string): Promise<DnsRecord[]> {
+export async function dnsRecordsCloudflare(name: string, type?: DnsRecordType): Promise<DnsRecord[]> {
 	const cloudflareDnsUrl = new URL('https://cloudflare-dns.com/dns-query')
 	cloudflareDnsUrl.searchParams.set('name', name)
 
@@ -55,7 +58,7 @@ export async function dnsRecordsCloudflare(name: string, type?: string): Promise
 	return records
 }
 
-export async function dnsRecordsGoogle(name: string, type?: string): Promise<DnsRecord[]> {
+export async function dnsRecordsGoogle(name: string, type?: DnsRecordType): Promise<DnsRecord[]> {
 	const googleDnsUrl = new URL('https://dns.google/resolve')
 	googleDnsUrl.searchParams.set('name', name)
 
@@ -90,7 +93,7 @@ export async function dnsRecordsGoogle(name: string, type?: string): Promise<Dns
  * @param server The DNS server to query. If not provided, the default DNS server on the network will be used
  * @returns The DNS records
  */
-export async function dnsRecordsNodeDig(names: string | string[], types?: string | string[], server?: string): Promise<DnsRecord[]> {
+export async function dnsRecordsNodeDig(names: string | string[], types?: DnsRecordType | DnsRecordType[], server?: string): Promise<DnsRecord[]> {
 	// start building the arguments list for the `dig` command
 	const args = []
 
@@ -156,12 +159,8 @@ export async function dnsRecordsNodeDig(names: string | string[], types?: string
  * @param types The DNS type to query
  * @returns The DNS records
  */
-export async function dnsRecordsNodeDns(name: string, type?: string): Promise<DnsRecord[]> {
+export async function dnsRecordsNodeDns(name: string, type?: DnsRecordType): Promise<DnsRecord[]> {
 	const { promises: dns } = await import('node:dns')
-
-	if (type) {
-		type = type.toUpperCase()
-	}
 
 	const dnsRecords: DnsRecord[] = []
 

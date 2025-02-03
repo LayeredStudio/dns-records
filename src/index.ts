@@ -2,12 +2,15 @@ import { getDnsRecords } from './get-dns-records.js'
 import { subdomainsRecords } from './subdomains.js'
 import { validatedDomain } from './utils.js'
 
+/** The type of a DnsRecord */
+export type DnsRecordType = 'A' | 'NS' | 'CNAME' | 'SOA' | 'PTR' | 'MX' | 'TXT' | 'SIG' | 'KEY' | 'AAAA' | 'SRV' | 'NAPTR' | 'DS' | 'DNSKEY' | 'CAA'
+
 /** DNS Record object, with type, ttl and value */
 export interface DnsRecord {
 	/** Fully qualified domain name (example.com, mail.google.com, analytics.x.com) */
 	name: string
 	/** Record type: A, AAAA, CNAME, MX, TXT, etc. */
-	type: string
+	type: DnsRecordType
 	/** Time to live (in seconds) for this record */
 	ttl: number
 	/** Record data: IP for A or AAAA, fqdn for CNAME, etc */
@@ -230,7 +233,7 @@ export function parseDnsRecord(record: string|Uint8Array): DnsRecord {
 	return {
 		name: String(parts[0]),
 		ttl: Number(parts[1]),
-		type: String(parts[3]),
+		type: String(parts[3]) as DnsRecordType,
 		data: String(parts[4]),
 	}
 }

@@ -1,5 +1,5 @@
 import { dnsRecordsCloudflare, dnsRecordsGoogle, dnsRecordsNodeDig, dnsRecordsNodeDns } from './dns-resolvers.js'
-import { type DnsRecord } from './index.js'
+import { type DnsRecord, type DnsRecordType } from './index.js'
 import { validatedDomain } from './utils.js'
 
 function bestDnsResolverForThisRuntime(): string {
@@ -34,7 +34,7 @@ function bestDnsResolverForThisRuntime(): string {
  * const mxRecords = await getDnsRecords('android.com', 'MX', 'google-dns')
  * ```
  */
-export async function getDnsRecords(name: string, type?: string, resolver?: string): Promise<DnsRecord[]> {
+export async function getDnsRecords(name: string, type?: DnsRecordType, resolver?: string): Promise<DnsRecord[]> {
 	name = validatedDomain(name)
 
 	if (!resolver) {
