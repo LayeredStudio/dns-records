@@ -50,7 +50,7 @@ export async function dnsRecordsCloudflare(name: string, type?: DnsRecordType): 
 
 	const json: any = await re.json()
 	const records: DnsRecord[] = (json.Answer || json.Authority || []).map((record: any) => {
-		const type = dnsTypeNumbers[record.type] || String(record.type)
+		const type = dnsTypeNumbers[record.type] || record.type
 
 		return prepareDnsRecord({ name: record.name, type, ttl: record.TTL, data: record.data })
 	})
@@ -76,7 +76,7 @@ export async function dnsRecordsGoogle(name: string, type?: DnsRecordType): Prom
 	const records: DnsRecord[] = (json.Answer || json.Authority || []).map((record: any) => {
 		return prepareDnsRecord({
 			name: record.name,
-			type: dnsTypeNumbers[record.type] || String(record.type),
+			type: dnsTypeNumbers[record.type] || record.type,
 			ttl: record.TTL,
 			data: record.data,
 		})
@@ -144,7 +144,7 @@ export async function dnsRecordsNodeDig(names: string | string[], types?: DnsRec
 			dnsRecords.push(prepareDnsRecord({
 				name: String(parts[0]),
 				ttl: Number(parts[1]),
-				type: String(parts[3]),
+				type: parts[3] as DnsRecordType,
 				data: parts.slice(4).join(" "),
 			}))
 		})
