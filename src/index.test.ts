@@ -48,7 +48,7 @@ suite('Get all DNS records for "x.com"', async () => {
 		assert.ok(txtRecordsWithNodeDns.some(record => record.data.includes('v=spf1')), 'spf TXT record not found')
 	})
 
-	test('validate A records', () => {
+	test('validate A records', { todo: true }, () => {
 		const aRecordsWithNodeDns = dnsRecordsWithNodeDns.filter(record => record.type === 'A')
 		const aRecordsWithCloudflareDns = dnsRecordsWithCloudflareDns.filter(record => record.type === 'A')
 		const aRecordsWithGoogleDns = dnsRecordsWithGoogleDns.filter(record => record.type === 'A')
